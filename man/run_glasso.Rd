@@ -4,8 +4,13 @@
 \alias{run_glasso}
 \title{Wrapper for glasso method}
 \usage{
-run_glasso(x, method = c("glasso", "mb", "ct"), criterion = c("ric",
-  "stars"), verbose = FALSE, ...)
+run_glasso(
+  x,
+  method = c("glasso", "mb", "ct"),
+  criterion = c("ric", "stars"),
+  verbose = FALSE,
+  ...
+)
 }
 \arguments{
 \item{x}{A n by p matrix of gene expression data (n samples and p genes).}

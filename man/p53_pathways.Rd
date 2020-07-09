@@ -4,7 +4,9 @@
 \name{p53_pathways}
 \alias{p53_pathways}
 \title{Reactome pathway list for Homo sapiens}
-\format{A list of 13 vectors each containing a set of entregene IDs.}
+\format{
+A list of 13 vectors each containing a set of entregene IDs.
+}
 \usage{
 p53_pathways
 }

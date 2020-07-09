@@ -51,6 +51,8 @@ rename_genes <- function(x, gene_mat = NULL, to = NULL, species = NULL, ...) {
       stop('to = "', to[1], '" is unavailable.', 
            ' Only `to = "symbol"` is currently implemented.')
     }
+  } else if(is.null(gene_mat)) {
+    stop("Arguments `gene_mat`, `to`, and `species` are all NULL.")
   }
   
   if(is.vector(gene_mat) && length(gene_mat) == 2) {

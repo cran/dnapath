@@ -4,8 +4,12 @@
 \alias{summarize_pathways}
 \title{Summarize the differential connectivity of pathways.}
 \usage{
-summarize_pathways(x, alpha_pathway = NULL, alpha_gene = NULL,
-  monotonized = FALSE)
+summarize_pathways(
+  x,
+  alpha_pathway = NULL,
+  alpha_gene = NULL,
+  monotonized = FALSE
+)
 }
 \arguments{
 \item{x}{A 'dnapath_list' object from \code{\link{dnapath}}.}

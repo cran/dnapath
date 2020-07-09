@@ -131,7 +131,7 @@ plot.dnapath <- function(x, alpha = NULL, monotonized = FALSE,
   mar <- par("mar")
   on.exit(par(mar = mar))
   par(mar = rep(0, 4))
-  plot(g)
+  plot(g) # Calls the function SeqNet:::plot.network_plot.
   
   invisible(g)
 }
@@ -139,7 +139,7 @@ plot.dnapath <- function(x, alpha = NULL, monotonized = FALSE,
 
 #' Plot the expression values of two genes
 #' 
-#' Inspired by the \code{\link[DGCA]{plotCors}} function from the DGCA package,
+#' Inspired by the \code{plotCors} function from the DGCA package,
 #' this function is used to plot the expression values of two genes contained
 #' in the differential network analysis results. This is useful for comparing
 #' the marginal relationship between two genes. Note, however, that this 

@@ -4,8 +4,14 @@
 \alias{plot.dnapath}
 \title{Plot function for 'dnapath' object.}
 \usage{
-\method{plot}{dnapath}(x, alpha = NULL, monotonized = FALSE,
-  scale_edges = 1, scale_nodes = 1, ...)
+\method{plot}{dnapath}(
+  x,
+  alpha = NULL,
+  monotonized = FALSE,
+  scale_edges = 1,
+  scale_nodes = 1,
+  ...
+)
 }
 \arguments{
 \item{x}{A 'dnapath' object from \code{\link{dnapath}}.}

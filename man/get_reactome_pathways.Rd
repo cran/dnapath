@@ -4,8 +4,13 @@
 \alias{get_reactome_pathways}
 \title{Obtain Reactome pathways}
 \usage{
-get_reactome_pathways(species, overlap_limit = 0.9, min_size = 10,
-  max_size = 50, verbose = TRUE)
+get_reactome_pathways(
+  species,
+  overlap_limit = 0.9,
+  min_size = 10,
+  max_size = 50,
+  verbose = TRUE
+)
 }
 \arguments{
 \item{species}{A string, for example "Homo sapiens" or "Mus musculus",
@@ -31,7 +36,7 @@ and contains the entrezgene IDs of the genes in that pathway.
 Connects to \code{reactome.db} \insertCite{reactome}{dnapath}
 to obtain a list of pathways for a given species.
 The pathway list is processed by combining any two pathways that have
-substantial overlap (default is over 90% overlap). This output if this
+substantial overlap (default is over 90\% overlap). This output if this
 function can be used for the \code{pathway_list} argument in
 \code{\link{dnapath}}.
 }

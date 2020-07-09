@@ -4,8 +4,16 @@
 \alias{plot_pair}
 \title{Plot the expression values of two genes}
 \usage{
-plot_pair(x, gene_A, gene_B, method = "loess", alpha = 0.5,
-  se_alpha = 0.1, use_facet = FALSE, scales = "fixed")
+plot_pair(
+  x,
+  gene_A,
+  gene_B,
+  method = "loess",
+  alpha = 0.5,
+  se_alpha = 0.1,
+  use_facet = FALSE,
+  scales = "fixed"
+)
 }
 \arguments{
 \item{x}{A 'dnapath' or 'dnapath_list' object from \code{\link{dnapath}}.}
@@ -38,7 +46,7 @@ Additional modifications can be applied to this object just
 like any other ggplot.
 }
 \description{
-Inspired by the \code{\link[DGCA]{plotCors}} function from the DGCA package,
+Inspired by the \code{plotCors} function from the DGCA package,
 this function is used to plot the expression values of two genes contained
 in the differential network analysis results. This is useful for comparing
 the marginal relationship between two genes. Note, however, that this

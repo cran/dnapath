@@ -4,8 +4,14 @@
 \alias{run_aracne}
 \title{Wrapper for ARACNE method}
 \usage{
-run_aracne(x, estimator = "spearman", disc = "none", nbins = NULL,
-  eps = 0, ...)
+run_aracne(
+  x,
+  estimator = "spearman",
+  disc = "none",
+  nbins = NULL,
+  eps = 0,
+  ...
+)
 }
 \arguments{
 \item{x}{A n by p matrix of gene expression data (n samples and p genes).}

@@ -4,8 +4,7 @@
 \alias{summary.dnapath}
 \title{Summary function for 'dnapath' object.}
 \usage{
-\method{summary}{dnapath}(object, by_gene = TRUE, alpha = NULL,
-  monotonized = FALSE, ...)
+\method{summary}{dnapath}(object, by_gene = TRUE, alpha = NULL, monotonized = FALSE, ...)
 }
 \arguments{
 \item{object}{A 'dnapath' object from \code{\link{dnapath}}.}

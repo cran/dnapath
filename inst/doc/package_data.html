@@ -1,19 +1,18 @@
 <!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml">
+<html>
 
 <head>
 
 <meta charset="utf-8" />
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
 <meta name="generator" content="pandoc" />
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1" />
 
 <meta name="author" content="Tyler Grimes" />
 
-<meta name="date" content="2020-06-22" />
+<meta name="date" content="2020-07-09" />
 
 <title>Package datasets</title>
 
@@ -118,9 +117,6 @@ padding-right: 2em;
 font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
 font-size: 14px;
 line-height: 1.35;
-}
-#header {
-text-align: center;
 }
 #TOC {
 clear: both;
@@ -289,7 +285,8 @@ code > span.st { color: #d14; }
 code > span.co { color: #888888; font-style: italic; } 
 code > span.ot { color: #007020; } 
 code > span.al { color: #ff0000; font-weight: bold; } 
-code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61717; background-color: #e3d2d2; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
 </style>
 
 
@@ -304,7 +301,7 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 
 <h1 class="title toc-ignore">Package datasets</h1>
 <h4 class="author">Tyler Grimes</h4>
-<h4 class="date">2020-06-22</h4>
+<h4 class="date">2020-07-09</h4>
 
 
 <div id="TOC">
@@ -331,17 +328,16 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb1-1" data-line-number="1">pathway_list &lt;-<span class="st"> </span>dnapath<span class="op">::</span><span class="kw">get_reactome_pathways</span>(<span class="st">&quot;human&quot;</span>)</a></code></pre></div>
 <pre><code>## Obtaining reactome pathway information for species: Homo sapiens 
 ## Combining pathways that have greater than 90 % overlap.</code></pre>
-<p>This list contains the gene sets for 819 pathways. Here are the first two pathways:</p>
+<p>This list contains the gene sets for 823 pathways. Here are the first two pathways:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb3-1" data-line-number="1">pathway_list[<span class="dv">1</span><span class="op">:</span><span class="dv">2</span>]</a></code></pre></div>
 <pre><code>## $`Purine salvage`
-##  [1] &quot;100&quot;    &quot;132&quot;    &quot;161823&quot; &quot;1633&quot;   &quot;1716&quot;   &quot;270&quot;    &quot;271&quot;   
-##  [8] &quot;272&quot;    &quot;2766&quot;   &quot;3251&quot;   &quot;353&quot;    &quot;4860&quot;   &quot;51292&quot; 
+##  [1] &quot;100&quot;    &quot;132&quot;    &quot;161823&quot; &quot;1633&quot;   &quot;1716&quot;   &quot;270&quot;    &quot;271&quot;    &quot;272&quot;   
+##  [9] &quot;2766&quot;   &quot;3251&quot;   &quot;353&quot;    &quot;4860&quot;   &quot;51292&quot; 
 ## 
 ## $`Nucleotide salvage`
-##  [1] &quot;100&quot;    &quot;132&quot;    &quot;151531&quot; &quot;161823&quot; &quot;1633&quot;   &quot;1716&quot;   &quot;1890&quot;  
-##  [8] &quot;270&quot;    &quot;271&quot;    &quot;272&quot;    &quot;2766&quot;   &quot;3251&quot;   &quot;353&quot;    &quot;4860&quot;  
-## [15] &quot;51292&quot;  &quot;54963&quot;  &quot;7083&quot;   &quot;7084&quot;   &quot;7371&quot;   &quot;7378&quot;   &quot;8226&quot;  
-## [22] &quot;83549&quot;  &quot;978&quot;</code></pre>
+##  [1] &quot;100&quot;    &quot;132&quot;    &quot;151531&quot; &quot;161823&quot; &quot;1633&quot;   &quot;1716&quot;   &quot;1890&quot;   &quot;270&quot;   
+##  [9] &quot;271&quot;    &quot;272&quot;    &quot;2766&quot;   &quot;3251&quot;   &quot;353&quot;    &quot;4860&quot;   &quot;51292&quot;  &quot;54963&quot; 
+## [17] &quot;7083&quot;   &quot;7084&quot;   &quot;7371&quot;   &quot;7378&quot;   &quot;8226&quot;   &quot;83549&quot;  &quot;978&quot;</code></pre>
 <p>The list names correspond to the Reactome pathway name. Each pathway provides the entrezgene IDs of all genes in that pathway. For example, from the output above, we see that the first pathway in the list is the “purine salvage” pathway, and it contains the genes: 100, 132, 161823, etc.</p>
 <p>In practice, all of these pathways can be used in the <code>dnapath()</code> analysis. However, in some studies we may only be interested in a subset of this list. For example, if we are studying a cancer-related gene expression dataset, we may have a specific interest in cancer-related pathways. There are two ways to obtain a subset from the pathway list: (1) using the pathway names or (2) using the pathway genes. These two approaches are demonstrated in turn.</p>
 <div id="subsetting-pathways-using-pathway-names" class="section level2">
@@ -355,24 +351,22 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <a class="sourceLine" id="cb6-2" data-line-number="2">cancer_pathways &lt;-<span class="st"> </span>pathway_list[index_pathways]</a>
 <a class="sourceLine" id="cb6-3" data-line-number="3">cancer_pathways[<span class="dv">1</span><span class="op">:</span><span class="dv">3</span>] <span class="co"># Print out the first three</span></a></code></pre></div>
 <pre><code>## $`CD28 dependent PI3K/Akt signaling`
-##  [1] &quot;10000&quot;  &quot;117145&quot; &quot;1326&quot;   &quot;207&quot;    &quot;208&quot;    &quot;2475&quot;   &quot;253260&quot;
-##  [8] &quot;2534&quot;   &quot;3932&quot;   &quot;5170&quot;   &quot;5290&quot;   &quot;5295&quot;   &quot;5296&quot;   &quot;55615&quot; 
-## [15] &quot;57761&quot;  &quot;64223&quot;  &quot;79109&quot;  &quot;8503&quot;   &quot;9020&quot;   &quot;940&quot;    &quot;941&quot;   
-## [22] &quot;942&quot;   
+##  [1] &quot;10000&quot;  &quot;117145&quot; &quot;1326&quot;   &quot;207&quot;    &quot;208&quot;    &quot;2475&quot;   &quot;253260&quot; &quot;2534&quot;  
+##  [9] &quot;3932&quot;   &quot;5170&quot;   &quot;5290&quot;   &quot;5295&quot;   &quot;5296&quot;   &quot;55615&quot;  &quot;57761&quot;  &quot;64223&quot; 
+## [17] &quot;79109&quot;  &quot;8503&quot;   &quot;9020&quot;   &quot;940&quot;    &quot;941&quot;    &quot;942&quot;   
 ## 
 ## $`G beta:gamma signalling through PI3Kgamma`
-##  [1] &quot;10000&quot;  &quot;10681&quot;  &quot;146850&quot; &quot;207&quot;    &quot;208&quot;    &quot;23533&quot;  &quot;2782&quot;  
-##  [8] &quot;2783&quot;   &quot;2784&quot;   &quot;2785&quot;   &quot;2786&quot;   &quot;2787&quot;   &quot;2788&quot;   &quot;2790&quot;  
-## [15] &quot;2791&quot;   &quot;2792&quot;   &quot;2793&quot;   &quot;387&quot;    &quot;5170&quot;   &quot;51764&quot;  &quot;5294&quot;  
-## [22] &quot;54331&quot;  &quot;55970&quot;  &quot;59345&quot;  &quot;94235&quot; 
+##  [1] &quot;10000&quot;  &quot;10681&quot;  &quot;146850&quot; &quot;207&quot;    &quot;208&quot;    &quot;23533&quot;  &quot;2782&quot;   &quot;2783&quot;  
+##  [9] &quot;2784&quot;   &quot;2785&quot;   &quot;2786&quot;   &quot;2787&quot;   &quot;2788&quot;   &quot;2790&quot;   &quot;2791&quot;   &quot;2792&quot;  
+## [17] &quot;2793&quot;   &quot;387&quot;    &quot;5170&quot;   &quot;51764&quot;  &quot;5294&quot;   &quot;54331&quot;  &quot;55970&quot;  &quot;59345&quot; 
+## [25] &quot;94235&quot; 
 ## 
 ## $`Regulation of TP53 Degradation (See also: Regulation of TP53 Expression and Degradation)`
-##  [1] &quot;10000&quot;  &quot;1017&quot;   &quot;1029&quot;   &quot;11200&quot;  &quot;117584&quot; &quot;1616&quot;   &quot;207&quot;   
-##  [8] &quot;208&quot;    &quot;2475&quot;   &quot;253260&quot; &quot;4193&quot;   &quot;4194&quot;   &quot;472&quot;    &quot;51230&quot; 
-## [15] &quot;5170&quot;   &quot;5515&quot;   &quot;5516&quot;   &quot;5518&quot;   &quot;5519&quot;   &quot;5527&quot;   &quot;55615&quot; 
-## [22] &quot;6233&quot;   &quot;64223&quot;  &quot;6446&quot;   &quot;7157&quot;   &quot;7311&quot;   &quot;7314&quot;   &quot;7316&quot;  
-## [29] &quot;7874&quot;   &quot;79109&quot;  &quot;80196&quot;  &quot;890&quot;    &quot;8900&quot;   &quot;900&quot;    &quot;9099&quot;  
-## [36] &quot;983&quot;    &quot;639&quot;</code></pre>
+##  [1] &quot;10000&quot;  &quot;1017&quot;   &quot;1029&quot;   &quot;11200&quot;  &quot;117584&quot; &quot;1616&quot;   &quot;207&quot;    &quot;208&quot;   
+##  [9] &quot;2475&quot;   &quot;253260&quot; &quot;4193&quot;   &quot;4194&quot;   &quot;472&quot;    &quot;51230&quot;  &quot;5170&quot;   &quot;5515&quot;  
+## [17] &quot;5516&quot;   &quot;5518&quot;   &quot;5519&quot;   &quot;5527&quot;   &quot;55615&quot;  &quot;6233&quot;   &quot;64223&quot;  &quot;6446&quot;  
+## [25] &quot;7157&quot;   &quot;7311&quot;   &quot;7314&quot;   &quot;7316&quot;   &quot;7874&quot;   &quot;79109&quot;  &quot;80196&quot;  &quot;890&quot;   
+## [33] &quot;8900&quot;   &quot;900&quot;    &quot;9099&quot;   &quot;983&quot;    &quot;639&quot;</code></pre>
 <p>Subsetting on these cancer-related pathways results in 19 pathways.</p>
 <p>In general, the pathway list obtained from the <code>dnapath::get_reactome_pathways()</code> function can be subset based on the pathway names, as illustrated in this example. Here, we focused on cancer pathways, but the regular expression “((p53)|(pi3k))” can be replaced to search for any desired pathways. To learn more about the <code>grep()</code> function and regular expression, see <a href="https://bookdown.org/rdpeng/rprogdatascience/regular-expressions.html">chapter 17</a> of R Programming for Data Science by Roger Peng.</p>
 </div>
@@ -391,31 +385,29 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <a class="sourceLine" id="cb9-2" data-line-number="2">cancer_pathways &lt;-<span class="st"> </span>pathway_list[index_pathways]</a>
 <a class="sourceLine" id="cb9-3" data-line-number="3">cancer_pathways[<span class="dv">1</span><span class="op">:</span><span class="dv">3</span>] <span class="co"># Print out the first three</span></a></code></pre></div>
 <pre><code>## $`Activation of BH3-only proteins`
-##  [1] &quot;10000&quot;  &quot;10018&quot;  &quot;10971&quot;  &quot;140735&quot; &quot;1869&quot;   &quot;207&quot;    &quot;208&quot;   
-##  [8] &quot;23368&quot;  &quot;27113&quot;  &quot;2810&quot;   &quot;5366&quot;   &quot;5533&quot;   &quot;5534&quot;   &quot;5599&quot;  
-## [15] &quot;572&quot;    &quot;572&quot;    &quot;596&quot;    &quot;637&quot;    &quot;7027&quot;   &quot;7029&quot;   &quot;7157&quot;  
-## [22] &quot;7159&quot;   &quot;7161&quot;   &quot;7529&quot;   &quot;7531&quot;   &quot;7532&quot;   &quot;7533&quot;   &quot;7534&quot;  
-## [29] &quot;8626&quot;   &quot;8655&quot;   &quot;90427&quot; 
+##  [1] &quot;10000&quot;  &quot;10018&quot;  &quot;10971&quot;  &quot;140735&quot; &quot;1869&quot;   &quot;207&quot;    &quot;208&quot;    &quot;23368&quot; 
+##  [9] &quot;27113&quot;  &quot;2810&quot;   &quot;5366&quot;   &quot;5533&quot;   &quot;5534&quot;   &quot;5599&quot;   &quot;572&quot;    &quot;572&quot;   
+## [17] &quot;596&quot;    &quot;637&quot;    &quot;7027&quot;   &quot;7029&quot;   &quot;7157&quot;   &quot;7159&quot;   &quot;7161&quot;   &quot;7529&quot;  
+## [25] &quot;7531&quot;   &quot;7532&quot;   &quot;7533&quot;   &quot;7534&quot;   &quot;8626&quot;   &quot;8655&quot;   &quot;90427&quot; 
 ## 
 ## $`Signaling by ERBB2`
-##  [1] &quot;10000&quot;  &quot;10193&quot;  &quot;10273&quot;  &quot;10718&quot;  &quot;10718&quot;  &quot;11140&quot;  &quot;145957&quot;
-##  [8] &quot;145957&quot; &quot;1729&quot;   &quot;1839&quot;   &quot;1839&quot;   &quot;1950&quot;   &quot;1950&quot;   &quot;1956&quot;  
-## [15] &quot;1956&quot;   &quot;2064&quot;   &quot;2064&quot;   &quot;2065&quot;   &quot;2065&quot;   &quot;2066&quot;   &quot;2066&quot;  
-## [22] &quot;2069&quot;   &quot;2069&quot;   &quot;207&quot;    &quot;208&quot;    &quot;2534&quot;   &quot;2549&quot;   &quot;26469&quot; 
-## [29] &quot;2885&quot;   &quot;2885&quot;   &quot;2886&quot;   &quot;3084&quot;   &quot;3084&quot;   &quot;3265&quot;   &quot;3265&quot;  
-## [36] &quot;3320&quot;   &quot;3845&quot;   &quot;3845&quot;   &quot;387&quot;    &quot;4145&quot;   &quot;4893&quot;   &quot;4893&quot;  
-## [43] &quot;51072&quot;  &quot;5290&quot;   &quot;5295&quot;   &quot;5335&quot;   &quot;5578&quot;   &quot;5580&quot;   &quot;5581&quot;  
-## [50] &quot;55914&quot;  &quot;5753&quot;   &quot;5782&quot;   &quot;5782&quot;   &quot;6233&quot;   &quot;6464&quot;   &quot;6464&quot;  
-## [57] &quot;6654&quot;   &quot;6654&quot;   &quot;6714&quot;   &quot;685&quot;    &quot;685&quot;    &quot;7311&quot;   &quot;7314&quot;  
-## [64] &quot;7316&quot;   &quot;7525&quot;   &quot;8065&quot;   &quot;9101&quot;   &quot;9542&quot;   &quot;9542&quot;  
+##  [1] &quot;10000&quot;  &quot;10193&quot;  &quot;10273&quot;  &quot;10718&quot;  &quot;10718&quot;  &quot;11140&quot;  &quot;145957&quot; &quot;145957&quot;
+##  [9] &quot;1729&quot;   &quot;1839&quot;   &quot;1839&quot;   &quot;1950&quot;   &quot;1950&quot;   &quot;1956&quot;   &quot;1956&quot;   &quot;2064&quot;  
+## [17] &quot;2064&quot;   &quot;2065&quot;   &quot;2065&quot;   &quot;2066&quot;   &quot;2066&quot;   &quot;2069&quot;   &quot;2069&quot;   &quot;207&quot;   
+## [25] &quot;208&quot;    &quot;2534&quot;   &quot;2549&quot;   &quot;26469&quot;  &quot;2885&quot;   &quot;2885&quot;   &quot;2886&quot;   &quot;3084&quot;  
+## [33] &quot;3084&quot;   &quot;3265&quot;   &quot;3265&quot;   &quot;3320&quot;   &quot;3845&quot;   &quot;3845&quot;   &quot;387&quot;    &quot;4145&quot;  
+## [41] &quot;4893&quot;   &quot;4893&quot;   &quot;51072&quot;  &quot;5290&quot;   &quot;5295&quot;   &quot;5335&quot;   &quot;5578&quot;   &quot;5580&quot;  
+## [49] &quot;5581&quot;   &quot;55914&quot;  &quot;5753&quot;   &quot;5782&quot;   &quot;5782&quot;   &quot;6233&quot;   &quot;6464&quot;   &quot;6464&quot;  
+## [57] &quot;6654&quot;   &quot;6654&quot;   &quot;6714&quot;   &quot;685&quot;    &quot;685&quot;    &quot;7311&quot;   &quot;7314&quot;   &quot;7316&quot;  
+## [65] &quot;7525&quot;   &quot;8065&quot;   &quot;9101&quot;   &quot;9542&quot;   &quot;9542&quot;  
 ## 
 ## $`CD28 co-stimulation`
-##  [1] &quot;10000&quot;  &quot;117145&quot; &quot;1326&quot;   &quot;207&quot;    &quot;208&quot;    &quot;2475&quot;   &quot;253260&quot;
-##  [8] &quot;2534&quot;   &quot;2885&quot;   &quot;3932&quot;   &quot;4067&quot;   &quot;5058&quot;   &quot;5062&quot;   &quot;5063&quot;  
-## [15] &quot;5170&quot;   &quot;5290&quot;   &quot;5295&quot;   &quot;5296&quot;   &quot;55615&quot;  &quot;57761&quot;  &quot;5879&quot;  
-## [22] &quot;64223&quot;  &quot;6714&quot;   &quot;7409&quot;   &quot;7525&quot;   &quot;79109&quot;  &quot;8503&quot;   &quot;9020&quot;  
-## [29] &quot;940&quot;    &quot;9402&quot;   &quot;941&quot;    &quot;942&quot;    &quot;998&quot;</code></pre>
-<p>Subsetting results in 70 pathways that contain at least one of the five cancer-related genes of interest. In general, any set of entrezgene IDs can be used to subset the pathways obtained from the <code>dnapath::get_reactome_pathways()</code> function, as illustrated in this example.</p>
+##  [1] &quot;10000&quot;  &quot;117145&quot; &quot;1326&quot;   &quot;207&quot;    &quot;208&quot;    &quot;2475&quot;   &quot;253260&quot; &quot;2534&quot;  
+##  [9] &quot;2885&quot;   &quot;3932&quot;   &quot;4067&quot;   &quot;5058&quot;   &quot;5062&quot;   &quot;5063&quot;   &quot;5170&quot;   &quot;5290&quot;  
+## [17] &quot;5295&quot;   &quot;5296&quot;   &quot;55615&quot;  &quot;57761&quot;  &quot;5879&quot;   &quot;64223&quot;  &quot;6714&quot;   &quot;7409&quot;  
+## [25] &quot;7525&quot;   &quot;79109&quot;  &quot;8503&quot;   &quot;9020&quot;   &quot;940&quot;    &quot;9402&quot;   &quot;941&quot;    &quot;942&quot;   
+## [33] &quot;998&quot;</code></pre>
+<p>Subsetting results in 69 pathways that contain at least one of the five cancer-related genes of interest. In general, any set of entrezgene IDs can be used to subset the pathways obtained from the <code>dnapath::get_reactome_pathways()</code> function, as illustrated in this example.</p>
 </div>
 <div id="p53_pathways-data" class="section level2">
 <h2><span class="header-section-number">1.3</span> <code>p53_pathways</code> data</h2>
@@ -570,7 +562,7 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <a class="sourceLine" id="cb34-2" data-line-number="2">gene_symbols &lt;-<span class="st"> </span><span class="kw">colnames</span>(rnaseq) <span class="co"># Extract the gene symbols to relabel.</span></a>
 <a class="sourceLine" id="cb34-3" data-line-number="3">gene_mat &lt;-<span class="st"> </span><span class="kw">symbol_to_entrez</span>(gene_symbols, <span class="st">&quot;human&quot;</span>,</a>
 <a class="sourceLine" id="cb34-4" data-line-number="4">                             <span class="dt">dir_save =</span> <span class="kw">tempdir</span>()) <span class="co"># Obtain mapping.</span></a></code></pre></div>
-<pre><code>##  - loading gene info from /var/folders/6d/pbn9v11d2kvfjsh3gz6rxfbc0000gn/T//RtmpSaVUxw/entrez_to_hsapiens.rds</code></pre>
+<pre><code>##  - loading gene info from /var/folders/6d/pbn9v11d2kvfjsh3gz6rxfbc0000gn/T//RtmpqlVFRW/entrez_to_hsapiens.rds</code></pre>
 <div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb36-1" data-line-number="1">gene_mat[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>, ]</a></code></pre></div>
 <pre><code>##   hgnc_symbol entrezgene_id
 ## 1        A1BG             1
@@ -605,7 +597,7 @@ code > span.fu { color: #900; font-weight: bold; }  code > span.er { color: #a61
 <a class="sourceLine" id="cb42-2" data-line-number="2">gene_entrez &lt;-<span class="st"> </span><span class="kw">get_genes</span>(p53_pathways) <span class="co"># Extract genes from pathway list.</span></a>
 <a class="sourceLine" id="cb42-3" data-line-number="3">gene_mat &lt;-<span class="st"> </span><span class="kw">entrez_to_symbol</span>(gene_entrez, <span class="st">&quot;human&quot;</span>, </a>
 <a class="sourceLine" id="cb42-4" data-line-number="4">                             <span class="dt">dir_save =</span> <span class="kw">tempdir</span>()) <span class="co"># Obtain mapping.</span></a></code></pre></div>
-<pre><code>##  - loading gene info from /var/folders/6d/pbn9v11d2kvfjsh3gz6rxfbc0000gn/T//RtmpSaVUxw/entrez_to_hsapiens.rds</code></pre>
+<pre><code>##  - loading gene info from /var/folders/6d/pbn9v11d2kvfjsh3gz6rxfbc0000gn/T//RtmpqlVFRW/entrez_to_hsapiens.rds</code></pre>
 <div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb44-1" data-line-number="1">gene_mat[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>, ]</a></code></pre></div>
 <pre><code>##   entrezgene_id hgnc_symbol
 ## 1         10000        AKT3

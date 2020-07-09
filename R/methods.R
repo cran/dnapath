@@ -61,6 +61,11 @@
 #' }
 run_aracne <- function(x, estimator = "spearman", disc = "none", nbins = NULL, 
                        eps = 0, ...) {
+  if(!requireNamespace("minet", quietly = TRUE)) {
+    warning("The `minet` package must be installed to use run_aracne(). Using ",
+            "run_pcor() instead.")
+    return(run_pcor(x, ...))
+  }
   p <- ncol(x)
   scores <- matrix(0, nrow = p, ncol = p)
   # Index the genes that have variability in their expression.
@@ -149,6 +154,12 @@ run_aracne <- function(x, estimator = "spearman", disc = "none", nbins = NULL,
 run_bc3net <- function(x, boot = 100, estimator = "spearman", disc = "equalwidth", 
                        mtc1 = TRUE, adj1 = "bonferroni", alpha1 = 0.05, 
                        mtc2 = TRUE, adj2 = "bonferroni", alpha2 = 0.05, ...) {
+  if(!requireNamespace("bc3net", quietly = TRUE)) {
+    warning("The `bc3net` package must be installed to use run_bc3net(). Using ",
+            "run_pcor() instead.")
+    return(run_pcor(x, ...))
+  }
+  
   p <- ncol(x)
   scores <- matrix(0, nrow = p, ncol = p)
   # Index the genes that have variability in their expression.
@@ -241,6 +252,11 @@ run_bc3net <- function(x, boot = 100, estimator = "spearman", disc = "equalwidth
 #' }
 run_c3net <- function(x, estimator = "spearman",  disc = "equalwidth", 
                       mtc = TRUE, adj = "bonferroni", alpha = 0.05, ...) {
+  if(!requireNamespace("bc3net", quietly = TRUE)) {
+    warning("The `bc3net` package must be installed to use run_c3net(). Using ",
+            "run_pcor() instead.")
+    return(run_pcor(x, ...))
+  }
   p <- ncol(x)
   scores <- matrix(0, nrow = p, ncol = p)
   # Index the genes that have variability in their expression.
@@ -322,6 +338,12 @@ run_c3net <- function(x, estimator = "spearman",  disc = "equalwidth",
 #' SeqNet::plot_network(nw_list[[1]])
 #' }
 run_clr <- function(x, estimator = "spearman", ...) {
+  if(!requireNamespace("minet", quietly = TRUE)) {
+    warning("The `minet` package must be installed to use run_clr(). Using ",
+            "run_pcor() instead.")
+    return(run_pcor(x, ...))
+  }
+  
   p <- ncol(x)
   scores <- matrix(0, nrow = p, ncol = p)
   # Index the genes that have variability in their expression.
@@ -485,6 +507,12 @@ run_corr <- function(x, threshold = NULL, method = "pearson", ...) {
 #' SeqNet::plot_network(nw_list[[1]])
 #' }
 run_dwlasso <- function(x, lambda1 = 0.4, lambda2 = 2, ...) {
+  if(!requireNamespace("DWLasso", quietly = TRUE)) {
+    warning("The `DWLasso` package must be installed to use run_dwlasso(). Using ",
+            "run_pcor() instead.")
+    return(run_pcor(x, ...))
+  }
+  
   p <- ncol(x)
   scores <- matrix(0, nrow = p, ncol = p)
   # Index the genes that have variability in their expression.
@@ -562,6 +590,12 @@ run_dwlasso <- function(x, lambda1 = 0.4, lambda2 = 2, ...) {
 #' SeqNet::plot_network(nw_list[[1]])
 #' }
 run_genie3 <- function(x, nTrees = 200, ...) {
+  if(!requireNamespace("GENIE3", quietly = TRUE)) {
+    warning("The `GENIE3` package must be installed to use run_genie3(). Using ",
+            "run_pcor() instead.")
+    return(run_pcor(x, ...))
+  }
+  
   p <- ncol(x)
   scores <- matrix(0, nrow = p, ncol = p)
   # Index the genes that have variability in their expression.
@@ -654,6 +688,12 @@ run_glasso <- function(x,
                        method = c("glasso", "mb", "ct"), 
                        criterion = c("ric", "stars"), 
                        verbose = FALSE, ...) {
+  if(!requireNamespace("huge", quietly = TRUE)) {
+    warning("The `huge` package must be installed to use run_glasso(). Using ",
+            "run_pcor() instead.")
+    return(run_pcor(x, ...))
+  }
+  
   method <- tolower(method[1])
   criterion <- tolower(criterion[1])
   if(!(method %in% c("mb", "glasso", "ct"))) {
@@ -759,6 +799,12 @@ run_glasso <- function(x,
 #' SeqNet::plot_network(nw_list[[1]])
 #' }
 run_mrnet <- function(x, estimator = "spearman", ...) {
+  if(!requireNamespace("minet", quietly = TRUE)) {
+    warning("The `minet` package must be installed to use run_mrnet(). Using ",
+            "run_pcor() instead.")
+    return(run_pcor(x, ...))
+  }
+  
   p <- ncol(x)
   scores <- matrix(0, nrow = p, ncol = p)
   # Index the genes that have variability in their expression.
@@ -840,8 +886,7 @@ run_pcor <- function(x, verbose = FALSE, ...) {
   # If only 1 or fewer genes have variability, no network can be estimated.
   if(length(index) <= 1) return(scores)
   
-  # Suppress warnings for variable detected with zero scale.
-  mat <- suppressWarnings(corpcor::pcor.shrink(x[, index], verbose = verbose))
+  mat <- corpcor::pcor.shrink(x[, index], verbose = verbose)
   mat <- matrix(as.numeric(mat), nrow = nrow(mat), ncol = ncol(mat))
   diag(mat) <- 0
   

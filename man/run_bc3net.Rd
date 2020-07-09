@@ -4,10 +4,19 @@
 \alias{run_bc3net}
 \title{Wrapper for BC3Net method}
 \usage{
-run_bc3net(x, boot = 100, estimator = "spearman",
-  disc = "equalwidth", mtc1 = TRUE, adj1 = "bonferroni",
-  alpha1 = 0.05, mtc2 = TRUE, adj2 = "bonferroni", alpha2 = 0.05,
-  ...)
+run_bc3net(
+  x,
+  boot = 100,
+  estimator = "spearman",
+  disc = "equalwidth",
+  mtc1 = TRUE,
+  adj1 = "bonferroni",
+  alpha1 = 0.05,
+  mtc2 = TRUE,
+  adj2 = "bonferroni",
+  alpha2 = 0.05,
+  ...
+)
 }
 \arguments{
 \item{x}{A n by p matrix of gene expression data (n samples and p genes).}

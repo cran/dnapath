@@ -4,8 +4,17 @@
 \alias{dna_pathway}
 \title{Differential network analysis on a single pathway}
 \usage{
-dna_pathway(x, pathway, groups = NULL, network_inference = run_pcor,
-  n_perm = 100, lp = 2, seed = NULL, verbose = FALSE, ...)
+dna_pathway(
+  x,
+  pathway,
+  groups = NULL,
+  network_inference = run_pcor,
+  n_perm = 100,
+  lp = 2,
+  seed = NULL,
+  verbose = FALSE,
+  ...
+)
 }
 \arguments{
 \item{x}{The gene expression data to be analyzed. Assumed to already be

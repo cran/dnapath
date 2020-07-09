@@ -4,8 +4,15 @@
 \alias{run_c3net}
 \title{Wrapper for C3Net method}
 \usage{
-run_c3net(x, estimator = "spearman", disc = "equalwidth", mtc = TRUE,
-  adj = "bonferroni", alpha = 0.05, ...)
+run_c3net(
+  x,
+  estimator = "spearman",
+  disc = "equalwidth",
+  mtc = TRUE,
+  adj = "bonferroni",
+  alpha = 0.05,
+  ...
+)
 }
 \arguments{
 \item{x}{A n by p matrix of gene expression data (n samples and p genes).}

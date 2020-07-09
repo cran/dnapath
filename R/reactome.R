@@ -248,7 +248,7 @@ entrez_to_symbol <- function(x,
     gene_info %>%
       dplyr::filter(!is.na(entrezgene_id)) %>%
       dplyr::group_by(entrezgene_id) %>%
-      dplyr::summarise_each(list(dplyr::first)) ->
+      dplyr::summarise(across(everything(), dplyr::first)) ->
       gene_info
     
     # Store the annotations for future reference.
@@ -367,13 +367,18 @@ symbol_to_entrez <- function(x, species,
     gene_info <- biomaRt::getBM(attributes = c("entrezgene_id", attribute),
                                 mart = mart)
     
-    colnames(gene_info)[2] <- "symbol"
+    # The order of columns is not fixed (sometimes entrezgene IDs are second).
+    # Identify which column contains the symbols.
+    index_symbol_column <- which(colnames(gene_info) == attribute)[1]
+    colnames(gene_info)[index_symbol_column] <- "symbol"
     gene_info %>%
       dplyr::filter(!is.na(entrezgene_id)) %>%
       dplyr::group_by(symbol) %>%
-      dplyr::summarise_each(list(dplyr::first)) ->
+      dplyr::summarise(across(everything(), dplyr::first)) %>%
+      dplyr::ungroup() ->
       gene_info
     
+    # The grouping variable (gene symbol) will now be the first column
     colnames(gene_info)[1] <- attribute
     
     # Store the annotations for future reference.
@@ -388,7 +393,7 @@ symbol_to_entrez <- function(x, species,
   
   # If the gene symbols are a factor, coerce into character.
   if(is.factor(x)) {
-    x <- as.numeric(as.character(x))
+    x <- as.character(x)
   }
   
   df <- data.frame(symbol = x, 
@@ -425,7 +430,7 @@ init_mart <- function(species) {
     error = function(e) {
       if(!curl::has_internet()) {
         message("Error: Internet connection must be available.\n")
-      } else {
+      } else if(!grepl("curl", e)) {
         message("Error: ", paste0('"', species, '"'), " is not an available species.\n",
                 "Example species include: `H. sapiens`, `M. Musculus`, `C. elegans`, etc.\n",
                 "Use the following command to see which species are available:\n",

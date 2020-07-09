@@ -4,8 +4,17 @@
 \alias{dnapath}
 \title{Differential Network Analysis Using Gene Pathways}
 \usage{
-dnapath(x, pathway_list, groups = NULL, network_inference = run_pcor,
-  n_perm = 100, lp = 2, seed = NULL, verbose = FALSE, ...)
+dnapath(
+  x,
+  pathway_list,
+  groups = NULL,
+  network_inference = run_pcor,
+  n_perm = 100,
+  lp = 2,
+  seed = NULL,
+  verbose = FALSE,
+  ...
+)
 }
 \arguments{
 \item{x}{The gene expression data to be analyzed. This can be either (1) a

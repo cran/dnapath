@@ -4,12 +4,14 @@
 \name{meso}
 \alias{meso}
 \title{Gene expression dataset for two groups}
-\format{A list containing two items:
+\format{
+A list containing two items:
 \describe{
 \item{$gene_expression}{A 32 by 150 matrix of gene expression values}
 \item{$groups}{A vector of length 32 indicating which group (stageii or
 stageiv) each of the rows in the gene expression data belong to.}
-}}
+}
+}
 \source{
 \url{http://www.linkedomics.org/data_download/TCGA-GBMLGG/}
 }
