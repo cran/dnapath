@@ -2,15 +2,26 @@
 % Please edit documentation in R/reactome.R
 \name{init_mart}
 \alias{init_mart}
-\title{Initialize biomaRt for mmusculus}
+\title{Initialize biomaRt for a given species}
 \usage{
 init_mart(species)
 }
+\arguments{
+\item{species}{The species to obtain a biomart dataset for. For example:
+"Homo sapiens", "m musculus", "C. elegans", or "S cerevisiae".
+"Human" and "mouse" can also be used and will be converted to the
+correct species name.}
+}
 \value{
-None. Creates a global variable called "mart" used by the
+None. Creates/updates the global variables "dnapath.mart_obj" and
+"dnapath.mart_species" used by the
 \code{\link{symbol_to_entrez}} and \code{\link{entrez_to_symbol}} methods.
 }
 \description{
-Initialize biomaRt for mmusculus
+Initialize biomaRt for a given species
+}
+\note{
+Requires internet connection. If unavailable, the default biomart
+and default species contained in the package is used.
 }
 \keyword{internal}

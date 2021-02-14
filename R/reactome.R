@@ -1,5 +1,8 @@
 #' @importFrom utils globalVariables
-utils::globalVariables(c("mart_species", "mart", "entrezgene_id", "symbol"))
+utils::globalVariables(c("dnapath.mart_species", 
+                         "dnapath.mart_obj", 
+                         "entrezgene_id", 
+                         "symbol"))
 
 #' Obtain Reactome pathways
 #' 
@@ -167,8 +170,8 @@ combine_overlapping_pathways <- function(pathway_list, overlap_limit = 0.9) {
 #'
 #' Uses `biomaRt` \insertCite{biomart}{dnapath} to map entrezgene IDs to gene 
 #' symbols for a given species. Obtains MGI symbols for mouse species and
-#' HGNC symbols for other species
-#' (note, note that this mapping may not work for all species). 
+#' HGNC symbols for other species.
+#' (Note: this mapping may not work for all species.)
 #' The output of this function can be used in \code{\link{rename_genes}}. 
 #' 
 #' If entrezgene IDs are used in a `dnapath_list` or `dnapath`
@@ -191,8 +194,9 @@ combine_overlapping_pathways <- function(pathway_list, overlap_limit = 0.9) {
 #' MGI symbols are returned when `species = "Mus musculus"` and HGNC symbols
 #' are returned otherwise.
 #' @note
-#' Internet connection is required to connect to biomaRt.
-#' 
+#' Internet connection is required to connect to biomaRt. If unavailable, the
+#' default biomart and default species contained in the package is used, but
+#' this may not match the desired species.
 #' @references 
 #' \insertRef{biomart}{dnapath}
 #' @seealso 
@@ -209,23 +213,13 @@ entrez_to_symbol <- function(x,
                              species,
                              dir_save = tempdir(),
                              verbose = TRUE) {
-  species <- tolower(species[1])
   
-  if(species == "human") {
-    species <- "h sapiens"
-  } else if(species == "mouse") {
-    species <- "m musculus"
+  if(class(x) %in% c("dnapath", "dnapath_list")) {
+    stop("Input should be a vector of entrezgene IDs, not a dnapath object. ",
+         'Use rename_genes() with `to = "symbol"`')
   }
   
-  # If species contains a space, like "homo sapiens", "h. sapiens", or "h sapiens", 
-  # convert to format "hsapiens".
-  if(grepl(" ", species)) {
-    first <- substr(species, 1, 1)
-    species <- paste0(first, gsub("(.* )", "", species))
-  }
-  if(grepl("_gene_ensembl", species)) {
-    species <- gsub("_gene_ensembl", "", species)
-  }
+  species <- format_species_name(species)
   
   attribute <- "hgnc_symbol"
   if(species == "mmusculus") {
@@ -240,11 +234,13 @@ entrez_to_symbol <- function(x,
     if(verbose) cat("\t- loading gene info from", load_file, "\n")
     gene_info <- readRDS(load_file)
   } else {
-    if(!all(c("mart", "mart_species") %in% ls()) || (mart_species != species)) 
+    if(!all(c("dnapath.mart_obj", "dnapath.mart_species") %in% ls()) || 
+       is.null(dnapath.mart_obj) || is.null(dnapath.mart_species) ||
+       (dnapath.mart_species != species)) 
       init_mart(species)
     
     gene_info <- biomaRt::getBM(attributes = c("entrezgene_id", attribute),
-                                mart = mart)
+                                mart = dnapath.mart_obj)
     gene_info %>%
       dplyr::filter(!is.na(entrezgene_id)) %>%
       dplyr::group_by(entrezgene_id) %>%
@@ -298,7 +294,7 @@ entrez_to_symbol <- function(x,
 #' extract them and used for the `x` argument here.
 #' 
 #' @param x A vector of gene symbols.
-#' @param species The species to obtain entrezgene IDs for. For example:
+#' @param species The species used to obtain the entrezgene IDs. For example:
 #' "Homo sapiens", "m musculus", "C. elegans", or "S cerevisiae".
 #' "Human" and "mouse" can also be used and will be converted to the 
 #' correct species name.
@@ -311,10 +307,12 @@ entrez_to_symbol <- function(x,
 #' @return A data frame with two columns: the first contains the original
 #' gene symbols, and the second contains a corresponding entrezgene ID. 
 #' @note
-#' Internet connection is required to connect to biomaRt.
+#' Internet connection is required to connect to biomaRt. If unavailable, the
+#' default biomart and default species contained in the package is used, but
+#' this may not match the desired species.
 #' 
-#' It is assumed that `x` contains MGI symbols when `species = "Mus musculus"`
-#' and HGNC symbols otherwise.
+#' It is assumed that `x` contains MGI symbols when the biomart species is
+#' "Mus musculus" and HGNC symbols otherwise.
 #' @references 
 #' \insertRef{biomart}{dnapath}
 #' @seealso 
@@ -325,28 +323,18 @@ entrez_to_symbol <- function(x,
 #' # Convert a set of gene symbols to entrezgene IDs.
 #' # Note that not all may have mapping (such as "MSX" in this example).
 #' gene_mat <- symbol_to_entrez(c("SOX2", "SEMA3E", "COL11A1", "UBB", "MSX"),
-#'                                species = "human")
+#'                              species = "human")
 #' }
-symbol_to_entrez <- function(x, species,
+symbol_to_entrez <- function(x, 
+                             species,
                              dir_save = tempdir(),
                              verbose = TRUE) {
-  species <- tolower(species[1])
   
-  if(species == "human") {
-    species <- "h sapiens"
-  } else if(species == "mouse") {
-    species <- "m musculus"
+  if(class(x) %in% c("dnapath", "dnapath_list")) {
+    stop("Input should be a vector of entrezgene IDs, not a dnapath object.")
   }
   
-  # If species contains a space, like "homo sapiens", "h. sapiens", or "h sapiens", 
-  # convert to format "hsapiens".
-  if(grepl(" ", species)) {
-    first <- substr(species, 1, 1)
-    species <- paste0(first, gsub("(.* )", "", species))
-  }
-  if(grepl("_gene_ensembl", species)) {
-    species <- gsub("_gene_ensembl", "", species)
-  }
+  species <- format_species_name(species)
   
   attribute <- "hgnc_symbol"
   if(species == "mmusculus") {
@@ -361,11 +349,13 @@ symbol_to_entrez <- function(x, species,
     if(verbose) cat("\t- loading gene info from", load_file, "\n")
     gene_info <- readRDS(load_file)
   } else {
-    if(!all(c("mart", "mart_species") %in% ls()) || (mart_species != species)) 
+    if(!all(c("dnapath.mart_obj", "dnapath.mart_species") %in% ls()) || 
+       is.null(dnapath.mart_obj) || is.null(dnapath.mart_species) ||
+       (dnapath.mart_species != species)) 
       init_mart(species)
     
     gene_info <- biomaRt::getBM(attributes = c("entrezgene_id", attribute),
-                                mart = mart)
+                                mart = dnapath.mart_obj)
     
     # The order of columns is not fixed (sometimes entrezgene IDs are second).
     # Identify which column contains the symbols.
@@ -413,18 +403,27 @@ symbol_to_entrez <- function(x, species,
 
 
 
-
-#' Initialize biomaRt for mmusculus
+#' Initialize biomaRt for a given species
 #'
-#' @return None. Creates a global variable called "mart" used by the 
+#' @param species The species to obtain a biomart dataset for. For example:
+#' "Homo sapiens", "m musculus", "C. elegans", or "S cerevisiae".
+#' "Human" and "mouse" can also be used and will be converted to the 
+#' correct species name.
+#' @return None. Creates/updates the global variables "dnapath.mart_obj" and 
+#' "dnapath.mart_species" used by the 
 #' \code{\link{symbol_to_entrez}} and \code{\link{entrez_to_symbol}} methods.
+#' @note Requires internet connection. If unavailable, the default biomart
+#' and default species contained in the package is used. 
 #' @keywords internal
+#' @export
 init_mart <- function(species) {
   # listMarts(); listAttributes(mart) # Useful functions to obtain more info.
   # listDatasets(useMart('ensembl'));
   
+  species <- format_species_name(species)
+  
   # Obtain the biomaRt for this species.
-  mart <- tryCatch(
+  mart_temp <- tryCatch(
     biomaRt::useMart(biomart = "ensembl", 
                      dataset = paste0(species, "_gene_ensembl")),
     error = function(e) {
@@ -434,17 +433,55 @@ init_mart <- function(species) {
         message("Error: ", paste0('"', species, '"'), " is not an available species.\n",
                 "Example species include: `H. sapiens`, `M. Musculus`, `C. elegans`, etc.\n",
                 "Use the following command to see which species are available:\n",
-                "Note: these are named using the format `hsapiens` for `Homo sapiens`.\n",
-                "> biomaRt::listDatasets(useMart('ensembl'))$dataset\n")
+                "> biomaRt::listDatasets(useMart('ensembl'))$dataset\n",
+                "Note: biomaRt uses the format `hsapiens` for `Homo sapiens`.\n")
       }
-      stop(e)
+      return(NULL)
     })
   
-  mart_species <- species
-  
-  if(!is.null(mart)) {
+  if(is.null(mart_temp)) {
+    message("Warning: Using default species `H. sapiens`.\n")
+    mart_temp <- dnapath::mart
+    assign("dnapath.mart_obj", mart_temp, inherits = TRUE)
+    assign("dnapath.mart_species", "default", inherits = TRUE)
+  } else {
     # Save the biomaRt in global environment.
-    mart <<- mart
-    mart_species <<- mart_species
+    assign("dnapath.mart_obj", mart_temp, inherits = TRUE)
+    assign("dnapath.mart_species", species, inherits = TRUE)
   }
+  
+  return(list(mart_obj = mart_temp, 
+              mart_species = species))
+}
+
+#' Format sepcies name input.
+#' 
+#' Internal function used to format species names to be used with biomart.
+#' @param species The species to obtain a biomart dataset for. For example:
+#' "Homo sapiens", "m musculus", "C. elegans", or "S cerevisiae", and
+#' "Human" and "mouse" will be converted to the format required in biomart.
+#' @return A string containing the formatted species name.
+#' @keywords internal
+#' @export
+format_species_name <- function(species) {
+  # Convert to lowercase. If a vector of names is provided, use only the first.
+  species <- tolower(species[1])
+  
+  if(species == "human") {
+    species <- "h sapiens"
+  } else if(species == "mouse") {
+    species <- "m musculus"
+  }
+  
+  # If species contains a space, like "homo sapiens", "h. sapiens", or "h sapiens", 
+  # convert to format "hsapiens".
+  if(grepl(" ", species)) {
+    first <- substr(species, 1, 1)
+    species <- paste0(first, gsub("(.* )", "", species))
+  }
+  if(grepl("_gene_ensembl", species)) {
+    species <- gsub("_gene_ensembl", "", species)
+  }
+  
+  return(species)
 }

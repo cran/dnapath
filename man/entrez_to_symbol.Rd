@@ -31,8 +31,8 @@ are returned otherwise.
 \description{
 Uses \code{biomaRt} \insertCite{biomart}{dnapath} to map entrezgene IDs to gene
 symbols for a given species. Obtains MGI symbols for mouse species and
-HGNC symbols for other species
-(note, note that this mapping may not work for all species).
+HGNC symbols for other species.
+(Note: this mapping may not work for all species.)
 The output of this function can be used in \code{\link{rename_genes}}.
 }
 \details{
@@ -41,7 +41,9 @@ object, or a pathway list, then \code{\link{get_genes}} can be used to
 extract them and used for the \code{x} argument here.
 }
 \note{
-Internet connection is required to connect to biomaRt.
+Internet connection is required to connect to biomaRt. If unavailable, the
+default biomart and default species contained in the package is used, but
+this may not match the desired species.
 }
 \examples{
 \donttest{

@@ -271,7 +271,7 @@ results <- dnapath(x = meso$gene_expression,
                    n_perm = 20)
 ```
 
-Alternatively, there may be tuning parameters in the network inference method that can speed up computation. For example, in `run_genie3`, the `nTrees` argument might be lowered to tradeoff performance for computation time. This parameter can be adjusted using the additional `...` argument of `dnapath`.
+Alternatively, there may be tuning parameters in the network inference method that can speed up computation. For example, in `run_genie3`, the `nTrees` argument might be lowered to trade-off performance for computation time. This parameter can be adjusted using the additional `...` argument of `dnapath`.
 
 ```R
 # Run the differntial network analysis using GENIE3 with 20 permutations.

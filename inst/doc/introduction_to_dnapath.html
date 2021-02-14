@@ -12,10 +12,58 @@
 
 <meta name="author" content="Tyler Grimes" />
 
-<meta name="date" content="2020-07-09" />
+<meta name="date" content="2021-02-13" />
 
 <title>Introduction to dnapath</title>
 
+<style type="text/css">
+a.anchor-section {margin-left: 10px; visibility: hidden; color: inherit;}
+a.anchor-section::before {content: '#';}
+.hasAnchor:hover a.anchor-section {visibility: visible;}
+</style>
+<script>// Anchor sections v1.0 written by Atsushi Yasumoto on Oct 3rd, 2020.
+document.addEventListener('DOMContentLoaded', function() {
+  // Do nothing if AnchorJS is used
+  if (typeof window.anchors === 'object' && anchors.hasOwnProperty('hasAnchorJSLink')) {
+    return;
+  }
+
+  const h = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+
+  // Do nothing if sections are already anchored
+  if (Array.from(h).some(x => x.classList.contains('hasAnchor'))) {
+    return null;
+  }
+
+  // Use section id when pandoc runs with --section-divs
+  const section_id = function(x) {
+    return ((x.classList.contains('section') || (x.tagName === 'SECTION'))
+            ? x.id : '');
+  };
+
+  // Add anchors
+  h.forEach(function(x) {
+    const id = x.id || section_id(x.parentElement);
+    if (id === '') {
+      return null;
+    }
+    let anchor = document.createElement('a');
+    anchor.href = '#' + id;
+    anchor.classList = ['anchor-section'];
+    x.classList.add('hasAnchor');
+    x.appendChild(anchor);
+  });
+});
+</script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
 
 
 <style type="text/css">code{white-space: pre;}</style>
@@ -301,7 +349,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Introduction to dnapath</h1>
 <h4 class="author">Tyler Grimes</h4>
-<h4 class="date">2020-07-09</h4>
+<h4 class="date">2021-02-13</h4>
 
 
 <div id="TOC">
@@ -532,7 +580,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 </blockquote>
 <div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb12-1" data-line-number="1">results &lt;-<span class="st"> </span><span class="kw">rename_genes</span>(results, <span class="dt">to =</span> <span class="st">&quot;symbol&quot;</span>, <span class="dt">species =</span> <span class="st">&quot;human&quot;</span>,</a>
 <a class="sourceLine" id="cb12-2" data-line-number="2">                        <span class="dt">dir_save =</span> <span class="kw">tempdir</span>())</a></code></pre></div>
-<pre><code>##  - saving gene info to /var/folders/6d/pbn9v11d2kvfjsh3gz6rxfbc0000gn/T//RtmpqlVFRW/entrez_to_hsapiens.rds</code></pre>
+<pre><code>##  - saving gene info to /var/folders/6d/pbn9v11d2kvfjsh3gz6rxfbc0000gn/T//RtmpH2DiAP/entrez_to_hsapiens.rds</code></pre>
 <div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb14-1" data-line-number="1">results[[<span class="dv">1</span>]]</a></code></pre></div>
 <pre><code>## Differential network analysis between stageii (group 1) and stageiv (group 2).
 ## Results for the pathway &quot;TP53 Regulates Transcription of Death Receptors and Ligands&quot; (out of 13 pathways analyzed) containing 12 genes.
@@ -606,7 +654,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <a class="sourceLine" id="cb24-4" data-line-number="4">                   <span class="dt">groups =</span> meso<span class="op">$</span>groups,</a>
 <a class="sourceLine" id="cb24-5" data-line-number="5">                   <span class="dt">network_inference =</span> run_genie3,</a>
 <a class="sourceLine" id="cb24-6" data-line-number="6">                   <span class="dt">n_perm =</span> <span class="dv">20</span>)</a></code></pre></div>
-<p>Alternatively, there may be tuning parameters in the network inference method that can speed up computation. For example, in <code>run_genie3</code>, the <code>nTrees</code> argument might be lowered to tradeoff performance for computation time. This parameter can be adjusted using the additional <code>...</code> argument of <code>dnapath</code>.</p>
+<p>Alternatively, there may be tuning parameters in the network inference method that can speed up computation. For example, in <code>run_genie3</code>, the <code>nTrees</code> argument might be lowered to trade-off performance for computation time. This parameter can be adjusted using the additional <code>...</code> argument of <code>dnapath</code>.</p>
 <div class="sourceCode" id="cb25"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb25-1" data-line-number="1"><span class="co"># Run the differntial network analysis using GENIE3 with 20 permutations.</span></a>
 <a class="sourceLine" id="cb25-2" data-line-number="2">results &lt;-<span class="st"> </span><span class="kw">dnapath</span>(<span class="dt">x =</span> meso<span class="op">$</span>gene_expression,</a>
 <a class="sourceLine" id="cb25-3" data-line-number="3">                   <span class="dt">pathway_list =</span> p53_pathways,</a>

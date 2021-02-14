@@ -62,24 +62,25 @@
 run_aracne <- function(x, estimator = "spearman", disc = "none", nbins = NULL, 
                        eps = 0, ...) {
   if(!requireNamespace("minet", quietly = TRUE)) {
-    warning("The `minet` package must be installed to use run_aracne(). Using ",
-            "run_pcor() instead.")
-    return(run_pcor(x, ...))
+    message("Warning: The `minet` package must be installed to use run_aracne(). Using ",
+            "run_corr() instead.")
+    return(run_corr(x, ...))
+  } else {
+    p <- ncol(x)
+    scores <- matrix(0, nrow = p, ncol = p)
+    # Index the genes that have variability in their expression.
+    index <- which(apply(x, 2, function(val) !all(abs(val - mean(val)) < 1e-12)))
+    # If only 1 or fewer genes have variability, no network can be estimated.
+    if(length(index) <= 1) return(scores)
+    
+    mim <- minet::build.mim(x[, index], estimator = estimator, disc = disc, nbins = nbins)
+    scores[index, index] <- minet::aracne(mim, eps = eps)
+    
+    colnames(scores) <- colnames(x)
+    rownames(scores) <- NULL
+    
+    return(scores) 
   }
-  p <- ncol(x)
-  scores <- matrix(0, nrow = p, ncol = p)
-  # Index the genes that have variability in their expression.
-  index <- which(apply(x, 2, function(val) !all(abs(val - mean(val)) < 1e-12)))
-  # If only 1 or fewer genes have variability, no network can be estimated.
-  if(length(index) <= 1) return(scores)
-  
-  mim <- minet::build.mim(x[, index], estimator = estimator, disc = disc, nbins = nbins)
-  scores[index, index] <- minet::aracne(mim, eps = eps)
-  
-  colnames(scores) <- colnames(x)
-  rownames(scores) <- NULL
-  
-  return(scores)
 }
 
 #' Wrapper for BC3Net method
@@ -155,34 +156,34 @@ run_bc3net <- function(x, boot = 100, estimator = "spearman", disc = "equalwidth
                        mtc1 = TRUE, adj1 = "bonferroni", alpha1 = 0.05, 
                        mtc2 = TRUE, adj2 = "bonferroni", alpha2 = 0.05, ...) {
   if(!requireNamespace("bc3net", quietly = TRUE)) {
-    warning("The `bc3net` package must be installed to use run_bc3net(). Using ",
-            "run_pcor() instead.")
-    return(run_pcor(x, ...))
+    message("Warning: The `bc3net` package must be installed to use run_bc3net(). Using ",
+            "run_corr() instead.")
+    return(run_corr(x, ...))
+  } else {
+    p <- ncol(x)
+    scores <- matrix(0, nrow = p, ncol = p)
+    # Index the genes that have variability in their expression.
+    index <- which(apply(x, 2, function(val) !all(abs(val - mean(val)) < 1e-12)))
+    # If only 1 or fewer genes have variability, no network can be estimated.
+    if(length(index) <= 1) return(scores)
+    
+    scores[index, index] <- bc3net::bc3net(t(x[, index]), 
+                                           boot = boot,
+                                           estimator = estimator,
+                                           disc = disc,
+                                           mtc1 = mtc1,
+                                           adj1 = adj1,
+                                           alpha1 = alpha1,
+                                           mtc2 = mtc2,
+                                           adj2 = adj2,
+                                           alpha2 = alpha2,
+                                           igraph = FALSE)
+    
+    colnames(scores) <- colnames(x)
+    rownames(scores) <- NULL
+    
+    return(scores) 
   }
-  
-  p <- ncol(x)
-  scores <- matrix(0, nrow = p, ncol = p)
-  # Index the genes that have variability in their expression.
-  index <- which(apply(x, 2, function(val) !all(abs(val - mean(val)) < 1e-12)))
-  # If only 1 or fewer genes have variability, no network can be estimated.
-  if(length(index) <= 1) return(scores)
-  
-  scores[index, index] <- bc3net::bc3net(t(x[, index]), 
-                                         boot = boot,
-                                         estimator = estimator,
-                                         disc = disc,
-                                         mtc1 = mtc1,
-                                         adj1 = adj1,
-                                         alpha1 = alpha1,
-                                         mtc2 = mtc2,
-                                         adj2 = adj2,
-                                         alpha2 = alpha2,
-                                         igraph = FALSE)
-  
-  colnames(scores) <- colnames(x)
-  rownames(scores) <- NULL
-  
-  return(scores)
 }
 
 
@@ -253,29 +254,30 @@ run_bc3net <- function(x, boot = 100, estimator = "spearman", disc = "equalwidth
 run_c3net <- function(x, estimator = "spearman",  disc = "equalwidth", 
                       mtc = TRUE, adj = "bonferroni", alpha = 0.05, ...) {
   if(!requireNamespace("bc3net", quietly = TRUE)) {
-    warning("The `bc3net` package must be installed to use run_c3net(). Using ",
-            "run_pcor() instead.")
-    return(run_pcor(x, ...))
+    message("Warning: The `bc3net` package must be installed to use run_c3net(). Using ",
+            "run_corr() instead.")
+    return(run_corr(x, ...))
+  } else {
+    p <- ncol(x)
+    scores <- matrix(0, nrow = p, ncol = p)
+    # Index the genes that have variability in their expression.
+    index <- which(apply(x, 2, function(val) !all(abs(val - mean(val)) < 1e-12)))
+    # If only 1 or fewer genes have variability, no network can be estimated.
+    if(length(index) <= 1) return(scores)
+    
+    scores[index, index] <- bc3net::c3mtc(t(x[, index]), 
+                                          mtc = mtc,
+                                          adj = adj,
+                                          alpha = alpha, 
+                                          estimator = estimator, 
+                                          disc = disc,
+                                          igraph = FALSE)
+    
+    colnames(scores) <- colnames(x)
+    rownames(scores) <- NULL
+    
+    return(scores) 
   }
-  p <- ncol(x)
-  scores <- matrix(0, nrow = p, ncol = p)
-  # Index the genes that have variability in their expression.
-  index <- which(apply(x, 2, function(val) !all(abs(val - mean(val)) < 1e-12)))
-  # If only 1 or fewer genes have variability, no network can be estimated.
-  if(length(index) <= 1) return(scores)
-  
-  scores[index, index] <- bc3net::c3mtc(t(x[, index]), 
-                                        mtc = mtc,
-                                        adj = adj,
-                                        alpha = alpha, 
-                                        estimator = estimator, 
-                                        disc = disc,
-                                        igraph = FALSE)
-  
-  colnames(scores) <- colnames(x)
-  rownames(scores) <- NULL
-  
-  return(scores)
 }
 
 
@@ -339,25 +341,25 @@ run_c3net <- function(x, estimator = "spearman",  disc = "equalwidth",
 #' }
 run_clr <- function(x, estimator = "spearman", ...) {
   if(!requireNamespace("minet", quietly = TRUE)) {
-    warning("The `minet` package must be installed to use run_clr(). Using ",
-            "run_pcor() instead.")
-    return(run_pcor(x, ...))
+    message("Warning: The `minet` package must be installed to use run_clr(). Using ",
+            "run_corr() instead.")
+    return(run_corr(x, ...))
+  } else {
+    p <- ncol(x)
+    scores <- matrix(0, nrow = p, ncol = p)
+    # Index the genes that have variability in their expression.
+    index <- which(apply(x, 2, function(val) !all(abs(val - mean(val)) < 1e-12)))
+    # If only 1 or fewer genes have variability, no network can be estimated.
+    if(length(index) <= 1) return(scores)
+    
+    mim <- minet::build.mim(x[, index], estimator = estimator)
+    scores[index, index] <- minet::clr(mim)
+    
+    colnames(scores) <- colnames(x)
+    rownames(scores) <- NULL
+    
+    return(scores) 
   }
-  
-  p <- ncol(x)
-  scores <- matrix(0, nrow = p, ncol = p)
-  # Index the genes that have variability in their expression.
-  index <- which(apply(x, 2, function(val) !all(abs(val - mean(val)) < 1e-12)))
-  # If only 1 or fewer genes have variability, no network can be estimated.
-  if(length(index) <= 1) return(scores)
-  
-  mim <- minet::build.mim(x[, index], estimator = estimator)
-  scores[index, index] <- minet::clr(mim)
-  
-  colnames(scores) <- colnames(x)
-  rownames(scores) <- NULL
-  
-  return(scores)
 }
 
 
@@ -370,7 +372,8 @@ run_clr <- function(x, estimator = "spearman", ...) {
 #' @param threshold Cutoff for significant associations. If NULL, all correlations
 #' are returned. Otherwise, correlations of magnitude at or below this threshold are 
 #' set to zero.
-#' @param method Argument is passed into \code{\link[stats]{cor}}.
+#' @param method Argument is passed into \code{\link[stats]{cor}}. Should be one
+#' of "pearson" or "spearman".
 #' @param ... Additional arguments are ignored.
 #' @return A p by p matrix of association scores.
 #' @seealso 
@@ -418,7 +421,9 @@ run_clr <- function(x, estimator = "spearman", ...) {
 #' # First rename entrezgene IDs into gene symbols.
 #' SeqNet::plot_network(nw_list[[1]])
 #' }
-run_corr <- function(x, threshold = NULL, method = "pearson", ...) {
+run_corr <- function(x, threshold = NULL, 
+                     method = c("pearson", "spearman"), ...) {
+  method <- method[1]
   if(!(method %in% c("pearson", "spearman"))) {
     stop('method should be one of c("pearson", "spearman").')
   }
@@ -508,27 +513,27 @@ run_corr <- function(x, threshold = NULL, method = "pearson", ...) {
 #' }
 run_dwlasso <- function(x, lambda1 = 0.4, lambda2 = 2, ...) {
   if(!requireNamespace("DWLasso", quietly = TRUE)) {
-    warning("The `DWLasso` package must be installed to use run_dwlasso(). Using ",
-            "run_pcor() instead.")
-    return(run_pcor(x, ...))
+    message("Warning: The `DWLasso` package must be installed to use run_dwlasso(). Using ",
+            "run_corr() instead.")
+    return(run_corr(x, ...))
+  } else {
+    p <- ncol(x)
+    scores <- matrix(0, nrow = p, ncol = p)
+    # Index the genes that have variability in their expression.
+    index <- which(apply(x, 2, function(val) !all(abs(val - mean(val)) < 1e-12)))
+    # If only 1 or fewer genes have variability, no network can be estimated.
+    if(length(index) <= 1) return(scores)
+    
+    result <- DWLasso::DWLasso(x[, index], lambda1 = lambda1, lambda2 = lambda2)
+    scores[index, index] <- result$mat
+    
+    # Symmetrize the association matrix by averaging.
+    scores <- (scores + t(scores)) / 2
+    
+    colnames(scores) <- colnames(x)
+    
+    return(scores)
   }
-  
-  p <- ncol(x)
-  scores <- matrix(0, nrow = p, ncol = p)
-  # Index the genes that have variability in their expression.
-  index <- which(apply(x, 2, function(val) !all(abs(val - mean(val)) < 1e-12)))
-  # If only 1 or fewer genes have variability, no network can be estimated.
-  if(length(index) <= 1) return(scores)
-  
-  result <- DWLasso::DWLasso(x[, index], lambda1 = lambda1, lambda2 = lambda2)
-  scores[index, index] <- result$mat
-  
-  # Symmetrize the association matrix by averaging.
-  scores <- (scores + t(scores)) / 2
-  
-  colnames(scores) <- colnames(x)
-  
-  return(scores)
 }
 
 
@@ -553,6 +558,7 @@ run_dwlasso <- function(x, lambda1 = 0.4, lambda2 = 2, ...) {
 #' \code{\link{run_pcor}}, and \code{\link{run_silencer}}
 #' @export
 #' @examples 
+#' if(!requireNamespace("GENIE3", quietly = TRUE)) {
 #' data(meso)
 #' data(p53_pathways)
 #' 
@@ -575,7 +581,6 @@ run_dwlasso <- function(x, lambda1 = 0.4, lambda2 = 2, ...) {
 #' # The group-specific association matrices can be extracted using get_networks().
 #' nw_list <- get_networks(results[[1]]) # Get networks for pathway 1.
 #' 
-#' \donttest{
 #' # nw_list has length 2 and contains the inferred networks for the two groups.
 #' # The gene names are the Entrezgene IDs from the original expression dataset.
 #' # Renaming the genes in the dnapath results to rename those in the networks.
@@ -591,34 +596,34 @@ run_dwlasso <- function(x, lambda1 = 0.4, lambda2 = 2, ...) {
 #' }
 run_genie3 <- function(x, nTrees = 200, ...) {
   if(!requireNamespace("GENIE3", quietly = TRUE)) {
-    warning("The `GENIE3` package must be installed to use run_genie3(). Using ",
-            "run_pcor() instead.")
-    return(run_pcor(x, ...))
+    message("Warning: The `GENIE3` package must be installed to use run_genie3(). ", 
+            "Using run_corr() instead.")
+    return(run_corr(x, ...))
+  } else {
+    p <- ncol(x)
+    scores <- matrix(0, nrow = p, ncol = p)
+    # Index the genes that have variability in their expression.
+    index <- which(apply(x, 2, function(val) !all(abs(val - mean(val)) < 1e-12)))
+    # If only 1 or fewer genes have variability, no network can be estimated.
+    if(length(index) <= 1) return(scores)
+    
+    mat <- GENIE3::GENIE3(t(x[, index]), nTrees = nTrees)
+    
+    # GENIE3 rearranges columns of x; need to put back in orginal order.
+    genes <- colnames(mat)
+    orig_index <- sapply(colnames(x[, index]), function(k) which(genes == k))
+    mat <- mat[orig_index, orig_index]
+    
+    scores[index, index] <- mat
+    
+    # Symmetrize the associations.
+    scores <- 0.5 * (scores + t(scores))
+    
+    colnames(scores) <- colnames(x)
+    rownames(scores) <- NULL
+    
+    return(scores)
   }
-  
-  p <- ncol(x)
-  scores <- matrix(0, nrow = p, ncol = p)
-  # Index the genes that have variability in their expression.
-  index <- which(apply(x, 2, function(val) !all(abs(val - mean(val)) < 1e-12)))
-  # If only 1 or fewer genes have variability, no network can be estimated.
-  if(length(index) <= 1) return(scores)
-  
-  mat <- GENIE3::GENIE3(t(x[, index]), nTrees = nTrees)
-  
-  # GENIE3 rearranges columns of x; need to put back in orginal order.
-  genes <- colnames(mat)
-  orig_index <- sapply(colnames(x[, index]), function(k) which(genes == k))
-  mat <- mat[orig_index, orig_index]
-  
-  scores[index, index] <- mat
-  
-  # Symmetrize the associations.
-  scores <- 0.5 * (scores + t(scores))
-  
-  colnames(scores) <- colnames(x)
-  rownames(scores) <- NULL
-  
-  return(scores)
 }
 
 
@@ -689,53 +694,53 @@ run_glasso <- function(x,
                        criterion = c("ric", "stars"), 
                        verbose = FALSE, ...) {
   if(!requireNamespace("huge", quietly = TRUE)) {
-    warning("The `huge` package must be installed to use run_glasso(). Using ",
-            "run_pcor() instead.")
-    return(run_pcor(x, ...))
+    message("Warning: The `huge` package must be installed to use run_glasso(). Using ",
+            "run_corr(x, method = 'pearson') instead.")
+    return(run_corr(x, method = "pearson", ...))
+  } else {
+    method <- tolower(method[1])
+    criterion <- tolower(criterion[1])
+    if(!(method %in% c("mb", "glasso", "ct"))) {
+      stop('method should be one of "mb", "glasso", or "ct".')
+    }
+    if(criterion != "ric" & criterion != "stars") {
+      stop("criterion must be either \"ric\" or \"stars\".")
+    }
+    
+    p <- ncol(x)
+    scores <- matrix(0, nrow = p, ncol = p)
+    # Index the genes that have variability in their expression.
+    index <- which(apply(x, 2, function(val) !all(abs(val - mean(val)) < 1e-12)))
+    # If only 1 or fewer genes have variability, no network can be estimated.
+    if(length(index) <= 1) return(scores)
+    
+    # Use unsigned to treat positive and negative associations equally.
+    x_huge <- huge::huge(x[, index], method = method, verbose = verbose)
+    result <- huge::huge.select(x_huge, criterion = criterion, verbose = verbose)
+    
+    # Choose largest lambda at or below the optimal value.
+    index_lambda <- which(result$lambda <= result$opt.lambda)[1]
+    if(length(index) == 0) {
+      index_lambda <- 10 # = length(x_huge$icov)
+    } else if(is.na(index_lambda)) {
+      # If no lambdas were smaller than optimal value, choose the smallest.
+      index_lambda <- 1
+    }
+    
+    if(verbose) {
+      cat("Optimal lambda:", result$opt.lambda, "\n")
+    }
+    
+    mat <- as.matrix(x_huge$icov[[index_lambda]])
+    mat <- cov2cor(mat)
+    diag(mat) <- 0
+    mat <- (mat + t(mat)) / 2
+    
+    scores[index, index] <- mat
+    colnames(scores) <- colnames(x)
+    
+    return(scores)
   }
-  
-  method <- tolower(method[1])
-  criterion <- tolower(criterion[1])
-  if(!(method %in% c("mb", "glasso", "ct"))) {
-    stop('method should be one of "mb", "glasso", or "ct".')
-  }
-  if(criterion != "ric" & criterion != "stars") {
-    stop("criterion must be either \"ric\" or \"stars\".")
-  }
-  
-  p <- ncol(x)
-  scores <- matrix(0, nrow = p, ncol = p)
-  # Index the genes that have variability in their expression.
-  index <- which(apply(x, 2, function(val) !all(abs(val - mean(val)) < 1e-12)))
-  # If only 1 or fewer genes have variability, no network can be estimated.
-  if(length(index) <= 1) return(scores)
-  
-  # Use unsigned to treat positive and negative associations equally.
-  x_huge <- huge::huge(x[, index], method = method, verbose = verbose)
-  result <- huge::huge.select(x_huge, criterion = criterion, verbose = verbose)
-  
-  # Choose largest lambda at or below the optimal value.
-  index_lambda <- which(result$lambda <= result$opt.lambda)[1]
-  if(length(index) == 0) {
-    index_lambda <- 10 # = length(x_huge$icov)
-  } else if(is.na(index_lambda)) {
-    # If no lambdas were smaller than optimal value, choose the smallest.
-    index_lambda <- 1
-  }
-  
-  if(verbose) {
-    cat("Optimal lambda:", result$opt.lambda, "\n")
-  }
-  
-  mat <- as.matrix(x_huge$icov[[index_lambda]])
-  mat <- cov2cor(mat)
-  diag(mat) <- 0
-  mat <- (mat + t(mat)) / 2
-  
-  scores[index, index] <- mat
-  colnames(scores) <- colnames(x)
-  
-  return(scores)
 }
 
 
@@ -800,25 +805,25 @@ run_glasso <- function(x,
 #' }
 run_mrnet <- function(x, estimator = "spearman", ...) {
   if(!requireNamespace("minet", quietly = TRUE)) {
-    warning("The `minet` package must be installed to use run_mrnet(). Using ",
-            "run_pcor() instead.")
-    return(run_pcor(x, ...))
+    message("Warning: The `minet` package must be installed to use run_mrnet(). Using ",
+            "run_corr() instead.")
+    return(run_corr(x, ...))
+  } else {
+    p <- ncol(x)
+    scores <- matrix(0, nrow = p, ncol = p)
+    # Index the genes that have variability in their expression.
+    index <- which(apply(x, 2, function(val) !all(abs(val - mean(val)) < 1e-12)))
+    # If only 1 or fewer genes have variability, no network can be estimated.
+    if(length(index) <= 1) return(scores)
+    
+    mim <- minet::build.mim(x[, index], estimator = estimator)
+    scores[index, index] <- minet::mrnet(mim)
+    
+    colnames(scores) <- colnames(x)
+    rownames(scores) <- NULL
+    
+    return(scores)
   }
-  
-  p <- ncol(x)
-  scores <- matrix(0, nrow = p, ncol = p)
-  # Index the genes that have variability in their expression.
-  index <- which(apply(x, 2, function(val) !all(abs(val - mean(val)) < 1e-12)))
-  # If only 1 or fewer genes have variability, no network can be estimated.
-  if(length(index) <= 1) return(scores)
-  
-  mim <- minet::build.mim(x[, index], estimator = estimator)
-  scores[index, index] <- minet::mrnet(mim)
-  
-  colnames(scores) <- colnames(x)
-  rownames(scores) <- NULL
-  
-  return(scores)
 }
 
 #' Wrapper for partial correlations from corpcor

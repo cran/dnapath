@@ -9,7 +9,7 @@ symbol_to_entrez(x, species, dir_save = tempdir(), verbose = TRUE)
 \arguments{
 \item{x}{A vector of gene symbols.}
 
-\item{species}{The species to obtain entrezgene IDs for. For example:
+\item{species}{The species used to obtain the entrezgene IDs. For example:
 "Homo sapiens", "m musculus", "C. elegans", or "S cerevisiae".
 "Human" and "mouse" can also be used and will be converted to the
 correct species name.}
@@ -37,17 +37,19 @@ object, or a pathway list, then \code{\link{get_genes}} can be used to
 extract them and used for the \code{x} argument here.
 }
 \note{
-Internet connection is required to connect to biomaRt.
+Internet connection is required to connect to biomaRt. If unavailable, the
+default biomart and default species contained in the package is used, but
+this may not match the desired species.
 
-It is assumed that \code{x} contains MGI symbols when \code{species = "Mus musculus"}
-and HGNC symbols otherwise.
+It is assumed that \code{x} contains MGI symbols when the biomart species is
+"Mus musculus" and HGNC symbols otherwise.
 }
 \examples{
 \donttest{
 # Convert a set of gene symbols to entrezgene IDs.
 # Note that not all may have mapping (such as "MSX" in this example).
 gene_mat <- symbol_to_entrez(c("SOX2", "SEMA3E", "COL11A1", "UBB", "MSX"),
-                               species = "human")
+                             species = "human")
 }
 }
 \references{

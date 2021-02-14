@@ -4,7 +4,7 @@
 \alias{run_corr}
 \title{Wrapper for correlation co-expression}
 \usage{
-run_corr(x, threshold = NULL, method = "pearson", ...)
+run_corr(x, threshold = NULL, method = c("pearson", "spearman"), ...)
 }
 \arguments{
 \item{x}{A n by p matrix of gene expression data (n samples and p genes).}
@@ -13,7 +13,8 @@ run_corr(x, threshold = NULL, method = "pearson", ...)
 are returned. Otherwise, correlations of magnitude at or below this threshold are
 set to zero.}
 
-\item{method}{Argument is passed into \code{\link[stats]{cor}}.}
+\item{method}{Argument is passed into \code{\link[stats]{cor}}. Should be one
+of "pearson" or "spearman".}
 
 \item{...}{Additional arguments are ignored.}
 }

@@ -22,6 +22,7 @@ Uses the implementation from the \code{GENIE3} package.
 Can be used for the \code{network_inference} argument in \code{\link{dnapath}}.
 }
 \examples{
+if(!requireNamespace("GENIE3", quietly = TRUE)) {
 data(meso)
 data(p53_pathways)
 
@@ -44,7 +45,6 @@ summary(results)
 # The group-specific association matrices can be extracted using get_networks().
 nw_list <- get_networks(results[[1]]) # Get networks for pathway 1.
 
-\donttest{
 # nw_list has length 2 and contains the inferred networks for the two groups.
 # The gene names are the Entrezgene IDs from the original expression dataset.
 # Renaming the genes in the dnapath results to rename those in the networks.

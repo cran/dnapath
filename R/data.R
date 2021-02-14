@@ -29,3 +29,15 @@
 #' @format A list of 13 vectors each containing a set of entregene IDs.
 #' 
 "p53_pathways"
+
+
+#' Default mart obtained from biomaRt for H. sapiens
+#' 
+#' This dataset is used by default if the connection to biomaRt fails. It
+#' is highly recommended to retry the function call that attempted to connect to 
+#' biomaRt. Using this dataset in general will not produce the correct 
+#' results.
+#' 
+#' @format A 'Mart' object from biomaRt.
+#' 
+"mart"

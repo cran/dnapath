@@ -12,10 +12,58 @@
 
 <meta name="author" content="Tyler Grimes" />
 
-<meta name="date" content="2020-07-09" />
+<meta name="date" content="2021-02-13" />
 
 <title>Package datasets</title>
 
+<style type="text/css">
+a.anchor-section {margin-left: 10px; visibility: hidden; color: inherit;}
+a.anchor-section::before {content: '#';}
+.hasAnchor:hover a.anchor-section {visibility: visible;}
+</style>
+<script>// Anchor sections v1.0 written by Atsushi Yasumoto on Oct 3rd, 2020.
+document.addEventListener('DOMContentLoaded', function() {
+  // Do nothing if AnchorJS is used
+  if (typeof window.anchors === 'object' && anchors.hasOwnProperty('hasAnchorJSLink')) {
+    return;
+  }
+
+  const h = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+
+  // Do nothing if sections are already anchored
+  if (Array.from(h).some(x => x.classList.contains('hasAnchor'))) {
+    return null;
+  }
+
+  // Use section id when pandoc runs with --section-divs
+  const section_id = function(x) {
+    return ((x.classList.contains('section') || (x.tagName === 'SECTION'))
+            ? x.id : '');
+  };
+
+  // Add anchors
+  h.forEach(function(x) {
+    const id = x.id || section_id(x.parentElement);
+    if (id === '') {
+      return null;
+    }
+    let anchor = document.createElement('a');
+    anchor.href = '#' + id;
+    anchor.classList = ['anchor-section'];
+    x.classList.add('hasAnchor');
+    x.appendChild(anchor);
+  });
+});
+</script>
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
 
 
 <style type="text/css">code{white-space: pre;}</style>
@@ -301,7 +349,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Package datasets</h1>
 <h4 class="author">Tyler Grimes</h4>
-<h4 class="date">2020-07-09</h4>
+<h4 class="date">2021-02-13</h4>
 
 
 <div id="TOC">
@@ -562,7 +610,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <a class="sourceLine" id="cb34-2" data-line-number="2">gene_symbols &lt;-<span class="st"> </span><span class="kw">colnames</span>(rnaseq) <span class="co"># Extract the gene symbols to relabel.</span></a>
 <a class="sourceLine" id="cb34-3" data-line-number="3">gene_mat &lt;-<span class="st"> </span><span class="kw">symbol_to_entrez</span>(gene_symbols, <span class="st">&quot;human&quot;</span>,</a>
 <a class="sourceLine" id="cb34-4" data-line-number="4">                             <span class="dt">dir_save =</span> <span class="kw">tempdir</span>()) <span class="co"># Obtain mapping.</span></a></code></pre></div>
-<pre><code>##  - loading gene info from /var/folders/6d/pbn9v11d2kvfjsh3gz6rxfbc0000gn/T//RtmpqlVFRW/entrez_to_hsapiens.rds</code></pre>
+<pre><code>##  - loading gene info from /var/folders/6d/pbn9v11d2kvfjsh3gz6rxfbc0000gn/T//RtmpH2DiAP/entrez_to_hsapiens.rds</code></pre>
 <div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb36-1" data-line-number="1">gene_mat[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>, ]</a></code></pre></div>
 <pre><code>##   hgnc_symbol entrezgene_id
 ## 1        A1BG             1
@@ -591,13 +639,13 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <a class="sourceLine" id="cb40-2" data-line-number="2">index_genes &lt;-<span class="st"> </span><span class="kw">which</span>(<span class="kw">colnames</span>(rnaseq) <span class="op">%in%</span><span class="st"> </span><span class="kw">get_genes</span>(p53_pathways))</a>
 <a class="sourceLine" id="cb40-3" data-line-number="3">rnaseq &lt;-<span class="st"> </span>rnaseq[, index_genes]</a>
 <a class="sourceLine" id="cb40-4" data-line-number="4"><span class="kw">dim</span>(rnaseq) <span class="co"># 32 samples with 150 genes.</span></a></code></pre></div>
-<pre><code>## [1]  32 150</code></pre>
+<pre><code>## [1]  32 149</code></pre>
 <p>For completeness, we will show how to convert the entrezgene IDs in the pathway list into gene symbols.</p>
 <div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb42-1" data-line-number="1"><span class="co"># Convert entrezgene IDs -&gt; gene symbols</span></a>
 <a class="sourceLine" id="cb42-2" data-line-number="2">gene_entrez &lt;-<span class="st"> </span><span class="kw">get_genes</span>(p53_pathways) <span class="co"># Extract genes from pathway list.</span></a>
 <a class="sourceLine" id="cb42-3" data-line-number="3">gene_mat &lt;-<span class="st"> </span><span class="kw">entrez_to_symbol</span>(gene_entrez, <span class="st">&quot;human&quot;</span>, </a>
 <a class="sourceLine" id="cb42-4" data-line-number="4">                             <span class="dt">dir_save =</span> <span class="kw">tempdir</span>()) <span class="co"># Obtain mapping.</span></a></code></pre></div>
-<pre><code>##  - loading gene info from /var/folders/6d/pbn9v11d2kvfjsh3gz6rxfbc0000gn/T//RtmpqlVFRW/entrez_to_hsapiens.rds</code></pre>
+<pre><code>##  - loading gene info from /var/folders/6d/pbn9v11d2kvfjsh3gz6rxfbc0000gn/T//RtmpH2DiAP/entrez_to_hsapiens.rds</code></pre>
 <div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb44-1" data-line-number="1">gene_mat[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>, ]</a></code></pre></div>
 <pre><code>##   entrezgene_id hgnc_symbol
 ## 1         10000        AKT3
