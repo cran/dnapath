@@ -40,6 +40,12 @@ utils::globalVariables(c("dnapath.mart_species",
 #'                                       min_size = 10, max_size = 20)
 get_reactome_pathways <- function(species, overlap_limit = 0.9, min_size = 10, 
                                   max_size = 50, verbose = TRUE) {
+  if(!requireNamespace("reactome.db", quietly = TRUE)) {
+    message("Warning: The `reactome.db` package must be installed to use get_reactome_pathways().",
+            "Returning the p53_pathway list by default.")
+    return(dnapath::p53_pathways)
+  }
+  
   # If species is "human" or "mouse", change to appropriate name.
   if(tolower(species) == "human") 
     species <- "Homo sapiens"

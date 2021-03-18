@@ -10,7 +10,6 @@ NULL
 #' @importFrom grDevices rgb
 #' @importFrom curl has_internet
 #' @importFrom biomaRt getBM useMart
-#' @importFrom reactome.db reactomePATHNAME2ID reactomePATHID2EXTID reactomePATHID2NAME
 #' @importFrom igraph V E
 #' @importFrom corpcor pcor.shrink
 NULL
