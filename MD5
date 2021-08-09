@@ -1,4 +1,4 @@
-80a53e937d1de69e240cf1fc2a145d6a *DESCRIPTION
+2aaaac10e779fc2450a15ffd57b43f94 *DESCRIPTION
 7193631741d5d495c88da7e69ca183c8 *NAMESPACE
 940feffaaa9654c3fb5ccf97e69c300f *R/RcppExports.R
 b65433eda89c8d9ddacc0b8bb829a205 *R/data.R
@@ -8,7 +8,7 @@ b65433eda89c8d9ddacc0b8bb829a205 *R/data.R
 76bec2e6d8e71ffd7c2639b094043dd5 *R/plot.R
 a0dd9e0b2676e9cf492e47bbf4320c0d *R/reactome.R
 e46d15a173d2d7b6958387561c8ef243 *R/summary.R
-45709d2df6d67c5e74e130d765a86bd0 *build/partial.rdb
+cab1e03becfbff8a2848a0d95f69276b *build/partial.rdb
 f0d4ec9261cef0562983d0b8c3895d54 *build/vignette.rds
 28cd9ae496bcb446e12bf1cf71a93f44 *data/datalist
 1d695fb9902249e3c1e2c53c07047924 *data/mart.rda
@@ -18,10 +18,10 @@ a02929164303a169e13b82c6a767272a *inst/CITATION
 20e1bfb958f92966fdaadb37416cbf88 *inst/REFERENCES.bib
 30c6e5e82d691346e76514008bb9a0ed *inst/doc/introduction_to_dnapath.R
 1095e69fb4450312fad1cda63f6271ac *inst/doc/introduction_to_dnapath.Rmd
-a4dcfa1c1acf0972f5e507421159dd53 *inst/doc/introduction_to_dnapath.html
+ce23919fd6f5df7e23eb07024b4f13d4 *inst/doc/introduction_to_dnapath.html
 29cd3ffa3191816e1b2544a43b5db6e0 *inst/doc/package_data.R
 1924c9fc2be7546adb8a47ecad22d61c *inst/doc/package_data.Rmd
-e4a88936bfa08bfea286b5db006d2115 *inst/doc/package_data.html
+f1804a847ea3e1035c3e3b9a0497c26d *inst/doc/package_data.html
 af227e1fdb6535ed190432306df22755 *man/c.dnapath.Rd
 c45d770ed198acd7311b21bf9ea8c288 *man/c.dnapath_list.Rd
 d9f210a82af9fcf3620eabbe3d23f2a3 *man/combine_overlapping_pathways.Rd
@@ -82,8 +82,8 @@ d09178dbe3e3c830f6a65856ad9cb5e3 *man/symbol_to_entrez.Rd
 d9537547e4ce3a9290513f5d14ad5069 *man/tail.dnapath_list.Rd
 1e37cb8553e5e2f860ce7da2ed7309e7 *src/Makevars
 1e37cb8553e5e2f860ce7da2ed7309e7 *src/Makevars.win
-8caa28c28145a602cd0d17a7ac5a7230 *src/RcppExports.cpp
-8e7079b586be5f6856787fc6e769265b *src/dnaC.cpp
+5e2adca91ad71bcac195fdca5d5eb147 *src/RcppExports.cpp
+c856ed9a5109c7a0b925627e6f7f9f0c *src/dnaC.cpp
 b8281f52754edd35ff037c39766e66dd *tests/testthat.R
 a8977d8f6c63bb3fa456f5ace9329160 *tests/testthat/test-dna.R
 1095e69fb4450312fad1cda63f6271ac *vignettes/introduction_to_dnapath.Rmd

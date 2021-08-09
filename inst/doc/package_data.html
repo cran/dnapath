@@ -12,7 +12,7 @@
 
 <meta name="author" content="Tyler Grimes" />
 
-<meta name="date" content="2021-03-17" />
+<meta name="date" content="2021-08-05" />
 
 <title>Package datasets</title>
 
@@ -349,7 +349,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Package datasets</h1>
 <h4 class="author">Tyler Grimes</h4>
-<h4 class="date">2021-03-17</h4>
+<h4 class="date">2021-08-05</h4>
 
 
 <div id="TOC">
@@ -610,7 +610,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <a class="sourceLine" id="cb34-2" data-line-number="2">gene_symbols &lt;-<span class="st"> </span><span class="kw">colnames</span>(rnaseq) <span class="co"># Extract the gene symbols to relabel.</span></a>
 <a class="sourceLine" id="cb34-3" data-line-number="3">gene_mat &lt;-<span class="st"> </span><span class="kw">symbol_to_entrez</span>(gene_symbols, <span class="st">&quot;human&quot;</span>,</a>
 <a class="sourceLine" id="cb34-4" data-line-number="4">                             <span class="dt">dir_save =</span> <span class="kw">tempdir</span>()) <span class="co"># Obtain mapping.</span></a></code></pre></div>
-<pre><code>##  - loading gene info from /var/folders/6d/pbn9v11d2kvfjsh3gz6rxfbc0000gn/T//RtmpNHG1YX/entrez_to_hsapiens.rds</code></pre>
+<pre><code>##  - loading gene info from /var/folders/6d/pbn9v11d2kvfjsh3gz6rxfbc0000gn/T//RtmpgNVtbp/entrez_to_hsapiens.rds</code></pre>
 <div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb36-1" data-line-number="1">gene_mat[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>, ]</a></code></pre></div>
 <pre><code>##   hgnc_symbol entrezgene_id
 ## 1        A1BG             1
@@ -645,7 +645,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <a class="sourceLine" id="cb42-2" data-line-number="2">gene_entrez &lt;-<span class="st"> </span><span class="kw">get_genes</span>(p53_pathways) <span class="co"># Extract genes from pathway list.</span></a>
 <a class="sourceLine" id="cb42-3" data-line-number="3">gene_mat &lt;-<span class="st"> </span><span class="kw">entrez_to_symbol</span>(gene_entrez, <span class="st">&quot;human&quot;</span>, </a>
 <a class="sourceLine" id="cb42-4" data-line-number="4">                             <span class="dt">dir_save =</span> <span class="kw">tempdir</span>()) <span class="co"># Obtain mapping.</span></a></code></pre></div>
-<pre><code>##  - loading gene info from /var/folders/6d/pbn9v11d2kvfjsh3gz6rxfbc0000gn/T//RtmpNHG1YX/entrez_to_hsapiens.rds</code></pre>
+<pre><code>##  - loading gene info from /var/folders/6d/pbn9v11d2kvfjsh3gz6rxfbc0000gn/T//RtmpgNVtbp/entrez_to_hsapiens.rds</code></pre>
 <div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><a class="sourceLine" id="cb44-1" data-line-number="1">gene_mat[<span class="dv">1</span><span class="op">:</span><span class="dv">5</span>, ]</a></code></pre></div>
 <pre><code>##   entrezgene_id hgnc_symbol
 ## 1         10000        AKT3

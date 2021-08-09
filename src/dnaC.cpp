@@ -72,7 +72,9 @@ arma::vec d_genesC(arma::mat nw1, arma::mat nw2, double lp) {
         diff[i] += pow(std::abs(nw1(i, j) - nw2(i, j)), lp);
       }
     }
+    
     diff[i] = diff[i] / (p - 1);
+    
     if(lp < 1) {
       diff[i] = pow(diff[i], 1 / lp);
     }
