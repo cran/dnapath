@@ -4,7 +4,13 @@
 \alias{symbol_to_entrez}
 \title{Obtain entrezgene IDs for gene symbols}
 \usage{
-symbol_to_entrez(x, species, dir_save = tempdir(), verbose = TRUE)
+symbol_to_entrez(
+  x,
+  species,
+  symbol_name = NULL,
+  dir_save = tempdir(),
+  verbose = TRUE
+)
 }
 \arguments{
 \item{x}{A vector of gene symbols.}
@@ -13,6 +19,10 @@ symbol_to_entrez(x, species, dir_save = tempdir(), verbose = TRUE)
 "Homo sapiens", "m musculus", "C. elegans", or "S cerevisiae".
 "Human" and "mouse" can also be used and will be converted to the
 correct species name.}
+
+\item{symbol_name}{The type of gene symbol to use. If NULL, then "hgnc_symbol"
+is used for HGNC symbols, unless \code{species} is "mmusculus", in which case
+"mgi_symbol" is used.}
 
 \item{dir_save}{The directory to store annotation reference. Future
 calls to this function will use the stored annotations. This speeds up the

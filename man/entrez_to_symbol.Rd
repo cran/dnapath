@@ -4,7 +4,13 @@
 \alias{entrez_to_symbol}
 \title{Obtain gene symbols for entrezgene IDs}
 \usage{
-entrez_to_symbol(x, species, dir_save = tempdir(), verbose = TRUE)
+entrez_to_symbol(
+  x,
+  species,
+  symbol_name = NULL,
+  dir_save = tempdir(),
+  verbose = TRUE
+)
 }
 \arguments{
 \item{x}{A vector of entrezgene IDs.}
@@ -14,11 +20,15 @@ entrez_to_symbol(x, species, dir_save = tempdir(), verbose = TRUE)
 "Human" and "mouse" can also be used and will be converted to the
 correct species name.}
 
+\item{symbol_name}{The type of gene symbol to use. If NULL, then "hgnc_symbol"
+is used for HGNC symbols, unless \code{species} is "mmusculus", in which case}
+
 \item{dir_save}{The directory to store annotation reference. Future
 calls to this function will use the stored annotations. This speeds up the
 operation and allows for reproducibility in the event that the \code{biomaRt}
 database is updated. Set to NULL to disable. By default, it uses a
-temporary directory to store files during the R session.}
+temporary directory to store files during the R session.
+"mgi_symbol" is used.}
 
 \item{verbose}{Set to FALSE to avoid messages.}
 }

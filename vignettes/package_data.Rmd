@@ -298,3 +298,34 @@ tools::checkRdaFiles(file.path("data"))
 ```{r echo=FALSE}
 options(scipen = reset_options_scipen, digits = reset_options_digits)
 ```
+
+# biomaRt 
+
+The `biomaRt` package is used to link gene symbols with entrezgene IDs. The `entrez_to_symbol()` and `symbol_to_entrez()` functions require an internet connection to connect with the biomaRt database.
+
+This package contains an instance of the mapping between HGNC gene symbols and entregene IDs, which will be used if internet access is not available or if the `biomaRt` package is not installed. However, this dataset will not be applicable to species other than *hsapiens* and may not contain the most up-to-date mapping. A warning is given when it is used.
+
+```R
+# Not run: Internet access and `biomaRt` package is required.
+mart <- biomaRt::useMart(biomart = "ensembl", 
+                         dataset = "hsapiens_gene_ensembl")
+
+biomart_hsapiens <- biomaRt::getBM(attributes = c("entrezgene_id", "hgnc_symbol"),
+                                   mart = mart)
+
+library(dplyr) # For pipe operator "%>%".
+biomart_hsapiens %>%
+  dplyr::filter(!is.na(entrezgene_id)) %>%
+  dplyr::group_by(entrezgene_id) %>%
+  dplyr::summarise(across(everything(), dplyr::first)) ->
+  biomart_hsapiens
+```
+
+This mapping was compressed and saved for the package using the code:
+
+```R
+# Not run: Only for building the package.
+usethis::use_data(biomart_hsapiens)
+tools::resaveRdaFiles(file.path("data"), compress = "auto")
+tools::checkRdaFiles(file.path("data"))
+```

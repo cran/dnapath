@@ -9,7 +9,6 @@ NULL
 #' @importFrom graphics par plot
 #' @importFrom grDevices rgb
 #' @importFrom curl has_internet
-#' @importFrom biomaRt getBM useMart
 #' @importFrom igraph V E
 #' @importFrom corpcor pcor.shrink
 NULL

@@ -2,7 +2,7 @@
 #' 
 #' @param x A 'dnapath_list' or 'dnapath' object from \code{\link{dnapath}},
 #' a pathway list, or a vector of gene names. 
-#' @param gene_mat A matrix of key value pairs. The first column should contain
+#' @param gene_mat (Optional) A matrix of key value pairs. The first column should contain
 #' current gene names, and the second column the new names. Any genes that are
 #' not in this matrix will retain their current names. This can be any 
 #' user-defined mapping, or the mapping obtained using 
@@ -52,7 +52,7 @@ rename_genes <- function(x, gene_mat = NULL, to = NULL, species = NULL, ...) {
            ' Only `to = "symbol"` is currently implemented.')
     }
   } else if(is.null(gene_mat)) {
-    stop("Arguments `gene_mat`, `to`, and `species` are all NULL.")
+    stop("Arguments `gene_mat`, `to`, and `species` cannot all be NULL.")
   }
   
   if(is.vector(gene_mat) && length(gene_mat) == 2) {

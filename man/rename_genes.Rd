@@ -10,7 +10,7 @@ rename_genes(x, gene_mat = NULL, to = NULL, species = NULL, ...)
 \item{x}{A 'dnapath_list' or 'dnapath' object from \code{\link{dnapath}},
 a pathway list, or a vector of gene names.}
 
-\item{gene_mat}{A matrix of key value pairs. The first column should contain
+\item{gene_mat}{(Optional) A matrix of key value pairs. The first column should contain
 current gene names, and the second column the new names. Any genes that are
 not in this matrix will retain their current names. This can be any
 user-defined mapping, or the mapping obtained using

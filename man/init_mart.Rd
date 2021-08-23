@@ -7,21 +7,18 @@
 init_mart(species)
 }
 \arguments{
-\item{species}{The species to obtain a biomart dataset for. For example:
-"Homo sapiens", "m musculus", "C. elegans", or "S cerevisiae".
-"Human" and "mouse" can also be used and will be converted to the
-correct species name.}
+\item{species}{The species to obtain a biomart dataset for. This should be
+an output from \code{\link{format_species_name}}.}
 }
 \value{
-None. Creates/updates the global variables "dnapath.mart_obj" and
-"dnapath.mart_species" used by the
-\code{\link{symbol_to_entrez}} and \code{\link{entrez_to_symbol}} methods.
+A biomaRt object.
 }
 \description{
 Initialize biomaRt for a given species
 }
 \note{
-Requires internet connection. If unavailable, the default biomart
-and default species contained in the package is used.
+Requires internet connection. This function is called by
+\code{\link{get_biomart_mapping}}, which checks for internet connection
+prior to calling this function.
 }
 \keyword{internal}
