@@ -11,7 +11,8 @@ get_biomart_mapping(species, symbol_name, dir_save, verbose)
 an output from \code{\link{format_species_name}}.}
 
 \item{symbol_name}{The type of gene symbol to use. HGNC symbols are used by
-default, unless \code{species} is "mmusculus", in which case MGI symbols are used.}
+default (hgnc_symbol), unless \code{species} is "mmusculus", in which case MGI
+symbols are used (mgi_symbol).}
 
 \item{dir_save}{The directory to store annotation reference. Future
 calls to this function will use the stored annotations. This speeds up the

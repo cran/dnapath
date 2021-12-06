@@ -34,7 +34,7 @@ gene-gene association. For no line, set method = NULL.}
 \item{se_alpha}{Sets the transparancy of the confidence band around
 the association trend line. Set to 0 to remove the band.}
 
-\item{use_facet}{If TRUE, the groups are plotted in seperate graphs
+\item{use_facet}{If TRUE, the groups are plotted in separate graphs
 using the \code{link[ggplot2]{facet_wrap}} method.}
 
 \item{scales}{Only used if do_facet_wrap is TRUE. See

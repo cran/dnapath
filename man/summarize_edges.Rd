@@ -4,16 +4,21 @@
 \alias{summarize_edges}
 \title{Summarize differential connections for a pathway}
 \usage{
-summarize_edges(x, alpha_edge = NULL, monotonized = FALSE)
+summarize_edges(x, alpha = NULL, monotonized = FALSE, require_dc_genes = FALSE)
 }
 \arguments{
 \item{x}{A 'dnapath' object from \code{\link{dnapath}}.}
 
-\item{alpha_edge}{Threshold for p-values of edge DC scores. If NULL,
+\item{alpha}{Threshold for p-values of edge DC scores. If NULL,
 defaults to 0.05 or the minimum possible threshold (based on the
 number of permutatiosn that were run).}
 
 \item{monotonized}{If TRUE, monotonized p-values are used.}
+
+\item{require_dc_genes}{If TRUE, the gene-level differential connectivity
+p-value of the two genes for a given edge are also considered when deciding
+whether an edge is differentially connected. If neither gene is significantly
+differentially connected, then the edge between them will not be either.}
 }
 \value{
 A tibble summarizing the differential connections in

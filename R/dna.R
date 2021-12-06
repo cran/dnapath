@@ -16,7 +16,9 @@ utils::globalVariables(c("p_value", "dc_score", "mean_expr1", "mean_expr2"))
 #' @param pathway_list A single vector or list of vectors containing gene names 
 #' to indicate pathway membership. The vectors are used to subset the columns
 #' of the matrices in `x`. A pathway list can be obtained using 
-#' \code{\link{get_reactome_pathways}}.
+#' \code{\link{get_reactome_pathways}}. If NULL, then the entire expression 
+#' dataset is analyzed as a single network (this approach is not recommended 
+#' unless there are only a small number of genes).
 #' @param groups If `x` is a single matrix or data frame, `groups` must 
 #' be specified to label each row. `groups` is a vector of length equal to the 
 #' number of rows in `x`, and it should contain two unique elements 
@@ -212,7 +214,7 @@ dnapath <- function(x, pathway_list, groups = NULL,
   # Perform dnapath over each pathway in the pathway list.
   #################################################################
   if(is.null(pathway_list)) {
-    # If not list is povided, use all the genes in the dataset.
+    # If no pathway list is provided, use all the genes in the dataset.
     pathway_list <- list(colnames(x))
   }
   if(!is.list(pathway_list)) {
@@ -658,11 +660,11 @@ summary.dnapath_list <- function(object, by_gene = FALSE,
   
   if(by_gene) {
     df <- summarize_genes(object, 
-                          alpha_gene = alpha_gene,
+                          alpha = alpha_gene,
                           monotonized = monotonized)
   } else {
     df <- summarize_pathways(object, 
-                             alpha_pathway = alpha_pathway, 
+                             alpha = alpha_pathway, 
                              alpha_gene = alpha_gene,
                              monotonized = monotonized)
   }
@@ -705,11 +707,11 @@ summary.dnapath <- function(object, by_gene = TRUE, alpha = NULL,
   
   if(by_gene) {
     df <- summarize_genes_for_pathway(object, 
-                                      alpha_gene = alpha,
+                                      alpha = alpha,
                                       monotonized = monotonized)
   } else {
     df <- summarize_edges(object, 
-                          alpha_edge = alpha,
+                          alpha = alpha,
                           monotonized = monotonized)
   }
   

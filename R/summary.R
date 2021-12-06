@@ -9,7 +9,7 @@
 #' \code{\link{entrez_to_symbol}} or \code{\link{symbol_to_entrez}}.
 #' @param to (Optional) Setting `to = "symbol"` will rename entrezgene IDs to 
 #' gene symbols; this will automatically call the `entrez_to_symbol()` function 
-#' to obtain the mapping for `gene_mat`. The `species` arugment must also be 
+#' to obtain the mapping for `gene_mat`. The `species` argument must also be 
 #' specified when `to` is used. 
 #' @param species (Optional) Must be specified when setting `to = "symbol"`. This
 #' argument is passed into \code{\link{entrez_to_symbol}}.
@@ -213,23 +213,23 @@ filter_pathways <- function(x, alpha_pathway = NULL, monotonized = FALSE) {
 #' Summarize differential connectivity of genes in a pathway
 #' 
 #' @param x A 'dnapath' object of a single pathway.
-#' @param alpha_gene Threshold for p-values of gene DC scores, used to
+#' @param alpha Threshold for p-values of gene DC scores, used to
 #' subset the x. If NULL (or 1), x for all genes are shown.
 #' @param monotonized If TRUE, monotonized p-values are used.
 #' @return A tibble summarizing the differential connectivity of genes in
 #' the pathway.
 #' @keywords internal
-summarize_genes_for_pathway <- function(x, alpha_gene = NULL, monotonized = FALSE) {
+summarize_genes_for_pathway <- function(x, alpha = NULL, monotonized = FALSE) {
   if(class(x) != "dnapath") 
     stop(deparse(substitute(x)), " is not a 'dnapath' object.")
   
-  if(is.null(alpha_gene)) {
-    alpha_gene <- 1
+  if(is.null(alpha)) {
+    alpha <- 1
   }
-  if(alpha_gene < get_min_alpha(x)) {
-    warning("alpha_gene = ", alpha_gene, " is too low given the number of ",
+  if(alpha < get_min_alpha(x)) {
+    warning("alpha = ", alpha, " is too low given the number of ",
             "permutations. Setting to ", get_min_alpha(x))
-    alpha_gene <- get_min_alpha(x)
+    alpha <- get_min_alpha(x)
   }
   
   genes <- get_genes(x)
@@ -247,7 +247,7 @@ summarize_genes_for_pathway <- function(x, alpha_gene = NULL, monotonized = FALS
     # p_values will be NA if the inferred network is empty.
     index <- NULL
   } else {
-    index <- which(p_values <= alpha_gene)
+    index <- which(p_values <= alpha)
   }
   
   if(length(index) == 0) {
@@ -279,7 +279,7 @@ summarize_genes_for_pathway <- function(x, alpha_gene = NULL, monotonized = FALS
 #' Summarize the differential connectivity of pathways.
 #' 
 #' @param x A 'dnapath_list' object from \code{\link{dnapath}}.
-#' @param alpha_pathway Threshold for p-values of pathway DC scores. 
+#' @param alpha Threshold for p-values of pathway DC scores. 
 #' If NULL (or 1), results for all pathways are shown.
 #' @param alpha_gene Threshold for p-values of gene DC scores. Used to determine
 #' the number of genes that are differentially connected within each pathway.
@@ -299,7 +299,7 @@ summarize_genes_for_pathway <- function(x, alpha_gene = NULL, monotonized = FALS
 #' results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
 #'                    groups = meso$groups, n_perm = 10)
 #' summarize_pathways(results)
-summarize_pathways <- function(x, alpha_pathway = NULL, alpha_gene = NULL,
+summarize_pathways <- function(x, alpha = NULL, alpha_gene = NULL,
                                monotonized = FALSE) {
   if(class(x) == "dnapath") {
     # If a single pathway is provided, return a summary of the edges.
@@ -309,22 +309,13 @@ summarize_pathways <- function(x, alpha_pathway = NULL, alpha_gene = NULL,
          "'dnapath' object.")
   }
   
-  if(is.null(alpha_gene)) {
-    alpha_gene <- max(0.05, get_min_alpha(x))
+  if(is.null(alpha)) {
+    alpha <- 1
   }
-  if(alpha_gene < get_min_alpha(x)) {
-    warning("alpha_gene = ", alpha_gene, " is too low given the number of ",
+  if(alpha < get_min_alpha(x)) {
+    warning("alpha = ", alpha, " is too low given the number of ",
             "permutations. Setting to ", get_min_alpha(x))
-    alpha_gene <- get_min_alpha(x)
-  }
-  
-  if(is.null(alpha_pathway)) {
-    alpha_pathway <- 1
-  }
-  if(alpha_pathway < get_min_alpha(x)) {
-    warning("alpha_pathway = ", alpha_pathway, " is too low given the number of ",
-            "permutations. Setting to ", get_min_alpha(x))
-    alpha_pathway <- get_min_alpha(x)
+    alpha <- get_min_alpha(x)
   }
   
   if(monotonized) {
@@ -333,11 +324,11 @@ summarize_pathways <- function(x, alpha_pathway = NULL, alpha_gene = NULL,
     p_value <- sapply(x$pathway, function(path) path$p_value_path)
   }
   
-  if(alpha_pathway == 1) {
+  if(alpha == 1) {
     # Include pathways with NA p-values, which can result from empty networks.
     index <- 1:length(p_value)
   } else {
-    index <- which(p_value <= alpha_pathway)
+    index <- which(p_value <= alpha)
   }
   
   if(length(index) == 0) 
@@ -356,6 +347,16 @@ summarize_pathways <- function(x, alpha_pathway = NULL, alpha_gene = NULL,
   d_pathway <- sapply(x$pathway, function(x) x$d_pathway)
   p_value <- p_value[index]
   n_genes <- sapply(x$pathway, function(x) x$n_genes)
+  
+  if(is.null(alpha_gene)) {
+    alpha_gene <- 1
+  }
+  if(alpha_gene < get_min_alpha(x)) {
+    warning("alpha_gene = ", alpha_gene, " is too low given the number of ",
+            "permutations. Setting to ", get_min_alpha(x))
+    alpha_gene <- get_min_alpha(x)
+  }
+  
   if(monotonized) {
     n_genes_dc <- sapply(x$pathway, function(x) 
       sum(x$p_value_genes_mono <= alpha_gene, na.rm = TRUE))
@@ -398,7 +399,7 @@ summarize_pathways <- function(x, alpha_pathway = NULL, alpha_gene = NULL,
 #' Summarize the differential connectivity of genes over all pathways.
 #' 
 #' @param x A 'dnapath_list' object from \code{\link{dnapath}}.
-#' @param alpha_gene Threshold for p-values of gene DC scores. Used to determine
+#' @param alpha Threshold for p-values of gene DC scores. Used to determine
 #' the number of pathways that each gene is differentially connected in. If NULL,
 #' defaults to 0.05 or the minimum possible threshold (based on the
 #' number of permutatiosn that were run).
@@ -416,21 +417,21 @@ summarize_pathways <- function(x, alpha_pathway = NULL, alpha_gene = NULL,
 #'                    groups = meso$groups, n_perm = 10)
 #' summarize_genes(results) # Summary of genes across all pathways.
 #' summarize_genes(results[[1]]) # Summary of genes within the first pathway.
-summarize_genes <- function(x, alpha_gene = NULL, monotonized = FALSE) {
+summarize_genes <- function(x, alpha = NULL, monotonized = FALSE) {
   if(class(x) == "dnapath") {
-    return(summarize_genes_for_pathway(x, alpha_gene, monotonized))
+    return(summarize_genes_for_pathway(x, alpha, monotonized))
   } else if(class(x) != "dnapath_list"){
     stop(deparse(substitute(x)), " is not a 'dnapath_list' or ",
          "'dnapath' object.")
   }
   
-  if(is.null(alpha_gene)) {
-    alpha_gene <- max(0.05, get_min_alpha(x))
+  if(is.null(alpha)) {
+    alpha <- max(0.05, get_min_alpha(x))
   }
-  if(alpha_gene < get_min_alpha(x)) {
-    warning("alpha_gene = ", alpha_gene, " is too low given the number of ",
+  if(alpha < get_min_alpha(x)) {
+    warning("alpha = ", alpha, " is too low given the number of ",
             "permutations. Setting to ", get_min_alpha(x))
-    alpha_gene <- get_min_alpha(x)
+    alpha <- get_min_alpha(x)
   }
   
   # If there are no pathway results, return an empty table.
@@ -454,9 +455,9 @@ summarize_genes <- function(x, alpha_gene = NULL, monotonized = FALSE) {
     # First check that p_values are not NA, which happens if inferred network is empty.
     if(!any(is.na(x$pathway[[i]]$p_value_genes))) {
       if(monotonized) {
-        n_dc[index] <- n_dc[index] + (x$pathway[[i]]$p_value_genes_mono <= alpha_gene)
+        n_dc[index] <- n_dc[index] + (x$pathway[[i]]$p_value_genes_mono <= alpha)
       } else {
-        n_dc[index] <- n_dc[index] + (x$pathway[[i]]$p_value_genes <= alpha_gene)
+        n_dc[index] <- n_dc[index] + (x$pathway[[i]]$p_value_genes <= alpha)
       }
     }
   }
@@ -475,9 +476,9 @@ summarize_genes <- function(x, alpha_gene = NULL, monotonized = FALSE) {
   # Note, pathways containing a gene can be found by using:
   #  > subset(x, genes = gene_name)
   
-  alpha_gene <- round(alpha_gene, 3)
+  alpha <- round(alpha, 3)
   colnames(df)[3] <- paste0("n_dc (", 
-                            ifelse(alpha_gene == 0, "<0.001", alpha_gene), 
+                            ifelse(alpha == 0, "<0.001", alpha), 
                             ")")
   
   return(df)
@@ -486,10 +487,14 @@ summarize_genes <- function(x, alpha_gene = NULL, monotonized = FALSE) {
 #' Summarize differential connections for a pathway
 #' 
 #' @param x A 'dnapath' object from \code{\link{dnapath}}.
-#' @param alpha_edge Threshold for p-values of edge DC scores. If NULL,
+#' @param alpha Threshold for p-values of edge DC scores. If NULL,
 #' defaults to 0.05 or the minimum possible threshold (based on the
 #' number of permutatiosn that were run).
 #' @param monotonized If TRUE, monotonized p-values are used.
+#' @param require_dc_genes If TRUE, the gene-level differential connectivity
+#' p-value of the two genes for a given edge are also considered when deciding
+#' whether an edge is differentially connected. If neither gene is significantly
+#' differentially connected, then the edge between them will not be either.
 #' @return A tibble summarizing the differential connections in
 #' the pathway.
 #' @seealso 
@@ -502,7 +507,8 @@ summarize_genes <- function(x, alpha_gene = NULL, monotonized = FALSE) {
 #' results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
 #'                    groups = meso$groups, n_perm = 10)
 #' summarize_edges(results[[1]])
-summarize_edges <- function(x, alpha_edge = NULL, monotonized = FALSE) {
+summarize_edges <- function(x, alpha = NULL, monotonized = FALSE, 
+                            require_dc_genes = FALSE) {
   if(class(x) == "dnapath_list")
     stop("Summary of edges is not available for `dnapath_list` object. ",
          "Try again using a specific pathway, which can be done by ",
@@ -511,13 +517,13 @@ summarize_edges <- function(x, alpha_edge = NULL, monotonized = FALSE) {
   if(class(x) != "dnapath")
     stop(deparse(substitute(x)), " is not a 'dnapath' object.")
   
-  if(is.null(alpha_edge)) {
-    alpha_edge <- max(0.05, get_min_alpha(x))
+  if(is.null(alpha)) {
+    alpha <- 1
   }
-  if(alpha_edge < get_min_alpha(x)) {
-    warning("alpha_edge = ", alpha_edge, " is too low given the number of ",
+  if(alpha < get_min_alpha(x)) {
+    warning("alpha = ", alpha, " is too low given the number of ",
             "permutations. Setting to ", get_min_alpha(x))
-    alpha_edge <- get_min_alpha(x)
+    alpha <- get_min_alpha(x)
   }
   
   # Note, d_edges, p_value_edges, nw1, nw2, etc. are lower tri of matrix,
@@ -526,18 +532,43 @@ summarize_edges <- function(x, alpha_edge = NULL, monotonized = FALSE) {
   edges <- sapply(combn(length(genes), 2, simplify = FALSE), 
                   function(x) paste(genes[x[1]], genes[x[2]], sep = " - "))
   
-  # Subset on x with p-values below alpha_edge
+  # Subset on x with p-values below alpha
   if(monotonized) {
     p_values <- x$pathway$p_value_edges_mono
+    
+    if(require_dc_genes) {
+      # Calculate the min of the p-values for the gene-level differential
+      # connectivity of the two genes corresponding to each edge.
+      p_values_gene_min <- 
+        apply(expand.grid(x$pathway$p_value_genes_mono, 
+                          x$pathway$p_value_genes_mono)[1:length(p_values), ],
+              1, min) 
+    }
   } else {
     p_values <- x$pathway$p_value_edges
+    
+    if(require_dc_genes) {
+      # Calculate the min of the p-values for the gene-level differential
+      # connectivity of the two genes corresponding to each edge.
+      p_values_gene_min <- 
+        apply(expand.grid(x$pathway$p_value_genes, 
+                          x$pathway$p_value_genes)[1:length(p_values), ],
+              1, min) 
+    }
   }
   
   if(any(is.na(p_values))) {
     index <- NULL
   } else {
-    index <- which(p_values <= alpha_edge)
+    # Determine which edges are significantly differentially connected.
+    is_dc_edge <- ((p_values <= alpha))
+    if(require_dc_genes) {
+      is_dc_edge <- is_dc_edge & (p_values_gene_min <= alpha)
+    }
+    index <- which(is_dc_edge)
   }
+  
+  
   
   if(length(index) == 0)
     # If no edges meet the threshold, return an empty tibble.

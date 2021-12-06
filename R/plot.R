@@ -7,6 +7,15 @@
 #' If NULL (the default) then no edges are removed from the plot.
 #' @param monotonized If TRUE, monotonized (i.e. step-down) p-values from the 
 #' permutation test will be used.
+#' @param only_dc If TRUE, only differentially connected edges will be shown; 
+#' any edges that are present in both groups are hidden. If FALSE, the edges
+#' shared by both groups are shown. If a non-sparse estimator for network
+#' edges is used, then the graph may be dense and setting this argument to TRUE 
+#' will be useful for highlighting the DC edges.
+#' @param require_dc_genes If TRUE, the gene-level differential connectivity
+#' p-value of the two genes for a given edge are also considered when deciding
+#' whether an edge is differentially connected. If neither gene is significantly
+#' differentially connected, then the edge between them will not be either.
 #' @param scale_edges (Optional) multiplier for edge widths.
 #' @param scale_nodes (Optional) multiplier for node radius
 #' @param ... Additional arguments are passed into the plotting function
@@ -28,6 +37,7 @@
 #' # the plot that have p-values above 0.1.
 #' plot(results[[1]], alpha = 0.1) 
 plot.dnapath <- function(x, alpha = NULL, monotonized = FALSE, 
+                         only_dc = FALSE, require_dc_genes = FALSE,
                          scale_edges = 1, scale_nodes = 1,
                          ...) {
   if(!is(x, "dnapath")) 
@@ -51,33 +61,58 @@ plot.dnapath <- function(x, alpha = NULL, monotonized = FALSE,
   nw1 <- x$pathway$nw1
   nw2 <- x$pathway$nw2
   # If nw1 and nw2 are opposite sign, use max of |x - 0| or |0 - y|. 
-  # Otherwise, use |x - y| for the dc value.
-  dc_vals <- ifelse(nw2 * nw1 < 0, 
+  # Otherwise, use |x + y|/2 for the dc value.
+  nw_vals <- ifelse(nw2 * nw1 < 0, 
                     pmax(abs(nw2), abs(nw1)),
-                    abs(nw2 - nw1)) # Use x - 0, 0 - x, or x - y.
+                    abs(nw2 + nw1) / 2) # Use x - 0, 0 - x, or x - y.
   
   if(monotonized) {
     p_values <- x$pathway$p_value_edges_mono
+    
+    if(require_dc_genes) {
+      # Calculate the min of the p-values for the gene-level differential
+      # connectivity of the two genes corresponding to each edge.
+      p_values_gene_min <- 
+        apply(expand.grid(x$pathway$p_value_genes_mono, 
+                          x$pathway$p_value_genes_mono)[1:length(p_values), ],
+              1, min) 
+    }
   } else {
     p_values <- x$pathway$p_value_edges
+    
+    if(require_dc_genes) {
+      # Calculate the min of the p-values for the gene-level differential
+      # connectivity of the two genes corresponding to each edge.
+      p_values_gene_min <- 
+        apply(expand.grid(x$pathway$p_value_genes, 
+                          x$pathway$p_value_genes)[1:length(p_values), ],
+              1, min) 
+    }
   }
   
-  index_edges_remove <- NULL
+  # If alpha is provided, make sure it is not too small relative to the
+  # size of the permutation test.
   if(!is.null(alpha)) {
     alpha <- max(alpha, get_min_alpha(x))
-    index_edges_remove <- which(p_values > alpha)
-    dc_vals[index_edges_remove] <- 0
+  } else {
+    alpha <- 1
   }
-  index_edges <- which(dc_vals != 0)
   
-  alpha <- get_min_alpha(x)
-  edge_weights <- 8 * abs(dc_vals) / max(c(abs(x$pathway$nw1), abs(x$pathway$nw2)))
-  if(length(index_edges) > 0) {
-    edge_weights <- edge_weights[index_edges]
-    p_values <- p_values[index_edges]
-    nw1 <- nw1[index_edges]
-    nw2 <- nw2[index_edges]
+  # Determine which edges are significantly differentially connected.
+  is_dc_edge <- ((p_values <= alpha))
+  if(require_dc_genes) {
+    is_dc_edge <- is_dc_edge & (p_values_gene_min <= alpha)
   }
+  
+  # If `only_dc` is TRUE, then set any non-significant edges to zero.
+  if(only_dc) {
+    nw_vals[!is_dc_edge] <- 0
+  }
+  index_edges <- which(abs(nw_vals) > 10^-10)
+  index_dc_edges <- which(is_dc_edge[index_edges])
+  
+  edge_weights <- 8 * abs(nw_vals) / max(c(abs(x$pathway$nw1), abs(x$pathway$nw2)))
+  edge_weights <- edge_weights[index_edges]
   
   if(any(is.nan(edge_weights))) {
     # 0 / 0 association scores will result in NaN values. Set these to 0.
@@ -97,7 +132,7 @@ plot.dnapath <- function(x, alpha = NULL, monotonized = FALSE,
   # Positive values indicate increase in association from group 1 to group 2.
   # nw2 - nw1
   dnw <- matrix(0, p, p)
-  dnw[lower.tri(dnw)] <- dc_vals 
+  dnw[lower.tri(dnw)] <- nw_vals 
   dnw <- dnw + t(dnw)
   colnames(dnw) <- genes_in_dnw
   
@@ -121,11 +156,14 @@ plot.dnapath <- function(x, alpha = NULL, monotonized = FALSE,
                                 pmax(0, pmin(1, abs(fold_change) / 2)))))[index_genes]
   g$vertex.frame.color <- rgb(0.3, 0.3, 0.3, 0.5)
   # Rescale edge weights to be used for color transparency.
-  edge_weights <- ((log(pmin(1, p_values - alpha + 0.05)) / log(0.05))^2)[m]
+  edge_weights <- ((log(pmin(1, pmax(alpha, p_values[index_edges][index_dc_edges]) - alpha + 0.05)) / log(0.05))^2)
   if(any(is.nan(edge_weights))) edge_weights <- 0 # No edges are significantly DC.
-  g$edge.color <- (ifelse(abs(nw2) > abs(nw1), 
-                          rgb(1, 0.19, 0.19, edge_weights),
-                          rgb(0.31, 0.58, 0.8, edge_weights)))[m]
+  
+  g$edge.color <- rep(rgb(0, 0, 0, 1), length(index_edges))
+  g$edge.color[index_dc_edges] <- 
+    (ifelse(abs(nw2)[index_edges][index_dc_edges] > abs(nw1)[index_edges][index_dc_edges], 
+            rgb(1, 0.19, 0.19, edge_weights),
+            rgb(0.31, 0.58, 0.8, edge_weights)))
   g$vertex.label.cex <- 1
   
   mar <- par("mar")
@@ -156,7 +194,7 @@ plot.dnapath <- function(x, alpha = NULL, monotonized = FALSE,
 #' \code{\link[ggplot2]{geom_point}}.
 #' @param se_alpha Sets the transparancy of the confidence band around 
 #' the association trend line. Set to 0 to remove the band.
-#' @param use_facet If TRUE, the groups are plotted in seperate graphs
+#' @param use_facet If TRUE, the groups are plotted in separate graphs
 #' using the \code{link[ggplot2]{facet_wrap}} method.
 #' @param scales Only used if do_facet_wrap is TRUE. See 
 #' \code{link[ggplot2]{facet_wrap}} for details.

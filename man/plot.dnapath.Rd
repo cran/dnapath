@@ -8,6 +8,8 @@
   x,
   alpha = NULL,
   monotonized = FALSE,
+  only_dc = FALSE,
+  require_dc_genes = FALSE,
   scale_edges = 1,
   scale_nodes = 1,
   ...
@@ -21,6 +23,17 @@ If NULL (the default) then no edges are removed from the plot.}
 
 \item{monotonized}{If TRUE, monotonized (i.e. step-down) p-values from the
 permutation test will be used.}
+
+\item{only_dc}{If TRUE, only differentially connected edges will be shown;
+any edges that are present in both groups are hidden. If FALSE, the edges
+shared by both groups are shown. If a non-sparse estimator for network
+edges is used, then the graph may be dense and setting this argument to TRUE
+will be useful for highlighting the DC edges.}
+
+\item{require_dc_genes}{If TRUE, the gene-level differential connectivity
+p-value of the two genes for a given edge are also considered when deciding
+whether an edge is differentially connected. If neither gene is significantly
+differentially connected, then the edge between them will not be either.}
 
 \item{scale_edges}{(Optional) multiplier for edge widths.}
 

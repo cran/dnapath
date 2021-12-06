@@ -4,17 +4,12 @@
 \alias{summarize_pathways}
 \title{Summarize the differential connectivity of pathways.}
 \usage{
-summarize_pathways(
-  x,
-  alpha_pathway = NULL,
-  alpha_gene = NULL,
-  monotonized = FALSE
-)
+summarize_pathways(x, alpha = NULL, alpha_gene = NULL, monotonized = FALSE)
 }
 \arguments{
 \item{x}{A 'dnapath_list' object from \code{\link{dnapath}}.}
 
-\item{alpha_pathway}{Threshold for p-values of pathway DC scores.
+\item{alpha}{Threshold for p-values of pathway DC scores.
 If NULL (or 1), results for all pathways are shown.}
 
 \item{alpha_gene}{Threshold for p-values of gene DC scores. Used to determine

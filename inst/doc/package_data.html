@@ -1,224 +1,371 @@
 <!DOCTYPE html>
+
 <html>
+
 <head>
-<meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
-<title>Reactome pathways</title>
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
-<script type="text/javascript">
-window.onload = function() {
-  var imgs = document.getElementsByTagName('img'), i, img;
-  for (i = 0; i < imgs.length; i++) {
-    img = imgs[i];
-    // center an image if it is the only element of its parent
-    if (img.parentElement.childElementCount === 1)
-      img.parentElement.style.textAlign = 'center';
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="Tyler Grimes" />
+
+<meta name="date" content="2021-12-03" />
+
+<title>Package datasets</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
   }
-};
+});
 </script>
 
-<!-- Styles for R syntax highlighter -->
 <style type="text/css">
-   pre .operator,
-   pre .paren {
-     color: rgb(104, 118, 135)
-   }
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
 
-   pre .literal {
-     color: #990073
-   }
 
-   pre .number {
-     color: #099;
-   }
-
-   pre .comment {
-     color: #998;
-     font-style: italic
-   }
-
-   pre .keyword {
-     color: #900;
-     font-weight: bold
-   }
-
-   pre .identifier {
-     color: rgb(0, 0, 0);
-   }
-
-   pre .string {
-     color: #d14;
-   }
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
 </style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
 
-<!-- R syntax highlighter -->
-<script type="text/javascript">
-var hljs=new function(){function m(p){return p.replace(/&/gm,"&amp;").replace(/</gm,"&lt;")}function f(r,q,p){return RegExp(q,"m"+(r.cI?"i":"")+(p?"g":""))}function b(r){for(var p=0;p<r.childNodes.length;p++){var q=r.childNodes[p];if(q.nodeName=="CODE"){return q}if(!(q.nodeType==3&&q.nodeValue.match(/\s+/))){break}}}function h(t,s){var p="";for(var r=0;r<t.childNodes.length;r++){if(t.childNodes[r].nodeType==3){var q=t.childNodes[r].nodeValue;if(s){q=q.replace(/\n/g,"")}p+=q}else{if(t.childNodes[r].nodeName=="BR"){p+="\n"}else{p+=h(t.childNodes[r])}}}if(/MSIE [678]/.test(navigator.userAgent)){p=p.replace(/\r/g,"\n")}return p}function a(s){var r=s.className.split(/\s+/);r=r.concat(s.parentNode.className.split(/\s+/));for(var q=0;q<r.length;q++){var p=r[q].replace(/^language-/,"");if(e[p]){return p}}}function c(q){var p=[];(function(s,t){for(var r=0;r<s.childNodes.length;r++){if(s.childNodes[r].nodeType==3){t+=s.childNodes[r].nodeValue.length}else{if(s.childNodes[r].nodeName=="BR"){t+=1}else{if(s.childNodes[r].nodeType==1){p.push({event:"start",offset:t,node:s.childNodes[r]});t=arguments.callee(s.childNodes[r],t);p.push({event:"stop",offset:t,node:s.childNodes[r]})}}}}return t})(q,0);return p}function k(y,w,x){var q=0;var z="";var s=[];function u(){if(y.length&&w.length){if(y[0].offset!=w[0].offset){return(y[0].offset<w[0].offset)?y:w}else{return w[0].event=="start"?y:w}}else{return y.length?y:w}}function t(D){var A="<"+D.nodeName.toLowerCase();for(var B=0;B<D.attributes.length;B++){var C=D.attributes[B];A+=" "+C.nodeName.toLowerCase();if(C.value!==undefined&&C.value!==false&&C.value!==null){A+='="'+m(C.value)+'"'}}return A+">"}while(y.length||w.length){var v=u().splice(0,1)[0];z+=m(x.substr(q,v.offset-q));q=v.offset;if(v.event=="start"){z+=t(v.node);s.push(v.node)}else{if(v.event=="stop"){var p,r=s.length;do{r--;p=s[r];z+=("</"+p.nodeName.toLowerCase()+">")}while(p!=v.node);s.splice(r,1);while(r<s.length){z+=t(s[r]);r++}}}}return z+m(x.substr(q))}function j(){function q(x,y,v){if(x.compiled){return}var u;var s=[];if(x.k){x.lR=f(y,x.l||hljs.IR,true);for(var w in x.k){if(!x.k.hasOwnProperty(w)){continue}if(x.k[w] instanceof Object){u=x.k[w]}else{u=x.k;w="keyword"}for(var r in u){if(!u.hasOwnProperty(r)){continue}x.k[r]=[w,u[r]];s.push(r)}}}if(!v){if(x.bWK){x.b="\\b("+s.join("|")+")\\s"}x.bR=f(y,x.b?x.b:"\\B|\\b");if(!x.e&&!x.eW){x.e="\\B|\\b"}if(x.e){x.eR=f(y,x.e)}}if(x.i){x.iR=f(y,x.i)}if(x.r===undefined){x.r=1}if(!x.c){x.c=[]}x.compiled=true;for(var t=0;t<x.c.length;t++){if(x.c[t]=="self"){x.c[t]=x}q(x.c[t],y,false)}if(x.starts){q(x.starts,y,false)}}for(var p in e){if(!e.hasOwnProperty(p)){continue}q(e[p].dM,e[p],true)}}function d(B,C){if(!j.called){j();j.called=true}function q(r,M){for(var L=0;L<M.c.length;L++){if((M.c[L].bR.exec(r)||[null])[0]==r){return M.c[L]}}}function v(L,r){if(D[L].e&&D[L].eR.test(r)){return 1}if(D[L].eW){var M=v(L-1,r);return M?M+1:0}return 0}function w(r,L){return L.i&&L.iR.test(r)}function K(N,O){var M=[];for(var L=0;L<N.c.length;L++){M.push(N.c[L].b)}var r=D.length-1;do{if(D[r].e){M.push(D[r].e)}r--}while(D[r+1].eW);if(N.i){M.push(N.i)}return f(O,M.join("|"),true)}function p(M,L){var N=D[D.length-1];if(!N.t){N.t=K(N,E)}N.t.lastIndex=L;var r=N.t.exec(M);return r?[M.substr(L,r.index-L),r[0],false]:[M.substr(L),"",true]}function z(N,r){var L=E.cI?r[0].toLowerCase():r[0];var M=N.k[L];if(M&&M instanceof Array){return M}return false}function F(L,P){L=m(L);if(!P.k){return L}var r="";var O=0;P.lR.lastIndex=0;var M=P.lR.exec(L);while(M){r+=L.substr(O,M.index-O);var N=z(P,M);if(N){x+=N[1];r+='<span class="'+N[0]+'">'+M[0]+"</span>"}else{r+=M[0]}O=P.lR.lastIndex;M=P.lR.exec(L)}return r+L.substr(O,L.length-O)}function J(L,M){if(M.sL&&e[M.sL]){var r=d(M.sL,L);x+=r.keyword_count;return r.value}else{return F(L,M)}}function I(M,r){var L=M.cN?'<span class="'+M.cN+'">':"";if(M.rB){y+=L;M.buffer=""}else{if(M.eB){y+=m(r)+L;M.buffer=""}else{y+=L;M.buffer=r}}D.push(M);A+=M.r}function G(N,M,Q){var R=D[D.length-1];if(Q){y+=J(R.buffer+N,R);return false}var P=q(M,R);if(P){y+=J(R.buffer+N,R);I(P,M);return P.rB}var L=v(D.length-1,M);if(L){var O=R.cN?"</span>":"";if(R.rE){y+=J(R.buffer+N,R)+O}else{if(R.eE){y+=J(R.buffer+N,R)+O+m(M)}else{y+=J(R.buffer+N+M,R)+O}}while(L>1){O=D[D.length-2].cN?"</span>":"";y+=O;L--;D.length--}var r=D[D.length-1];D.length--;D[D.length-1].buffer="";if(r.starts){I(r.starts,"")}return R.rE}if(w(M,R)){throw"Illegal"}}var E=e[B];var D=[E.dM];var A=0;var x=0;var y="";try{var s,u=0;E.dM.buffer="";do{s=p(C,u);var t=G(s[0],s[1],s[2]);u+=s[0].length;if(!t){u+=s[1].length}}while(!s[2]);if(D.length>1){throw"Illegal"}return{r:A,keyword_count:x,value:y}}catch(H){if(H=="Illegal"){return{r:0,keyword_count:0,value:m(C)}}else{throw H}}}function g(t){var p={keyword_count:0,r:0,value:m(t)};var r=p;for(var q in e){if(!e.hasOwnProperty(q)){continue}var s=d(q,t);s.language=q;if(s.keyword_count+s.r>r.keyword_count+r.r){r=s}if(s.keyword_count+s.r>p.keyword_count+p.r){r=p;p=s}}if(r.language){p.second_best=r}return p}function i(r,q,p){if(q){r=r.replace(/^((<[^>]+>|\t)+)/gm,function(t,w,v,u){return w.replace(/\t/g,q)})}if(p){r=r.replace(/\n/g,"<br>")}return r}function n(t,w,r){var x=h(t,r);var v=a(t);var y,s;if(v){y=d(v,x)}else{return}var q=c(t);if(q.length){s=document.createElement("pre");s.innerHTML=y.value;y.value=k(q,c(s),x)}y.value=i(y.value,w,r);var u=t.className;if(!u.match("(\\s|^)(language-)?"+v+"(\\s|$)")){u=u?(u+" "+v):v}if(/MSIE [678]/.test(navigator.userAgent)&&t.tagName=="CODE"&&t.parentNode.tagName=="PRE"){s=t.parentNode;var p=document.createElement("div");p.innerHTML="<pre><code>"+y.value+"</code></pre>";t=p.firstChild.firstChild;p.firstChild.cN=s.cN;s.parentNode.replaceChild(p.firstChild,s)}else{t.innerHTML=y.value}t.className=u;t.result={language:v,kw:y.keyword_count,re:y.r};if(y.second_best){t.second_best={language:y.second_best.language,kw:y.second_best.keyword_count,re:y.second_best.r}}}function o(){if(o.called){return}o.called=true;var r=document.getElementsByTagName("pre");for(var p=0;p<r.length;p++){var q=b(r[p]);if(q){n(q,hljs.tabReplace)}}}function l(){if(window.addEventListener){window.addEventListener("DOMContentLoaded",o,false);window.addEventListener("load",o,false)}else{if(window.attachEvent){window.attachEvent("onload",o)}else{window.onload=o}}}var e={};this.LANGUAGES=e;this.highlight=d;this.highlightAuto=g;this.fixMarkup=i;this.highlightBlock=n;this.initHighlighting=o;this.initHighlightingOnLoad=l;this.IR="[a-zA-Z][a-zA-Z0-9_]*";this.UIR="[a-zA-Z_][a-zA-Z0-9_]*";this.NR="\\b\\d+(\\.\\d+)?";this.CNR="\\b(0[xX][a-fA-F0-9]+|(\\d+(\\.\\d*)?|\\.\\d+)([eE][-+]?\\d+)?)";this.BNR="\\b(0b[01]+)";this.RSR="!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|\\.|-|-=|/|/=|:|;|<|<<|<<=|<=|=|==|===|>|>=|>>|>>=|>>>|>>>=|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~";this.ER="(?![\\s\\S])";this.BE={b:"\\\\.",r:0};this.ASM={cN:"string",b:"'",e:"'",i:"\\n",c:[this.BE],r:0};this.QSM={cN:"string",b:'"',e:'"',i:"\\n",c:[this.BE],r:0};this.CLCM={cN:"comment",b:"//",e:"$"};this.CBLCLM={cN:"comment",b:"/\\*",e:"\\*/"};this.HCM={cN:"comment",b:"#",e:"$"};this.NM={cN:"number",b:this.NR,r:0};this.CNM={cN:"number",b:this.CNR,r:0};this.BNM={cN:"number",b:this.BNR,r:0};this.inherit=function(r,s){var p={};for(var q in r){p[q]=r[q]}if(s){for(var q in s){p[q]=s[q]}}return p}}();hljs.LANGUAGES.cpp=function(){var a={keyword:{"false":1,"int":1,"float":1,"while":1,"private":1,"char":1,"catch":1,"export":1,virtual:1,operator:2,sizeof:2,dynamic_cast:2,typedef:2,const_cast:2,"const":1,struct:1,"for":1,static_cast:2,union:1,namespace:1,unsigned:1,"long":1,"throw":1,"volatile":2,"static":1,"protected":1,bool:1,template:1,mutable:1,"if":1,"public":1,friend:2,"do":1,"return":1,"goto":1,auto:1,"void":2,"enum":1,"else":1,"break":1,"new":1,extern:1,using:1,"true":1,"class":1,asm:1,"case":1,typeid:1,"short":1,reinterpret_cast:2,"default":1,"double":1,register:1,explicit:1,signed:1,typename:1,"try":1,"this":1,"switch":1,"continue":1,wchar_t:1,inline:1,"delete":1,alignof:1,char16_t:1,char32_t:1,constexpr:1,decltype:1,noexcept:1,nullptr:1,static_assert:1,thread_local:1,restrict:1,_Bool:1,complex:1},built_in:{std:1,string:1,cin:1,cout:1,cerr:1,clog:1,stringstream:1,istringstream:1,ostringstream:1,auto_ptr:1,deque:1,list:1,queue:1,stack:1,vector:1,map:1,set:1,bitset:1,multiset:1,multimap:1,unordered_set:1,unordered_map:1,unordered_multiset:1,unordered_multimap:1,array:1,shared_ptr:1}};return{dM:{k:a,i:"</",c:[hljs.CLCM,hljs.CBLCLM,hljs.QSM,{cN:"string",b:"'\\\\?.",e:"'",i:"."},{cN:"number",b:"\\b(\\d+(\\.\\d*)?|\\.\\d+)(u|U|l|L|ul|UL|f|F)"},hljs.CNM,{cN:"preprocessor",b:"#",e:"$"},{cN:"stl_container",b:"\\b(deque|list|queue|stack|vector|map|set|bitset|multiset|multimap|unordered_map|unordered_set|unordered_multiset|unordered_multimap|array)\\s*<",e:">",k:a,r:10,c:["self"]}]}}}();hljs.LANGUAGES.r={dM:{c:[hljs.HCM,{cN:"number",b:"\\b0[xX][0-9a-fA-F]+[Li]?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+(?:[eE][+\\-]?\\d*)?L\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\b\\d+\\.(?!\\d)(?:i\\b)?",e:hljs.IMMEDIATE_RE,r:1},{cN:"number",b:"\\b\\d+(?:\\.\\d*)?(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"number",b:"\\.\\d+(?:[eE][+\\-]?\\d*)?i?\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"keyword",b:"(?:tryCatch|library|setGeneric|setGroupGeneric)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\.",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\.\\.\\d+(?![\\w.])",e:hljs.IMMEDIATE_RE,r:10},{cN:"keyword",b:"\\b(?:function)",e:hljs.IMMEDIATE_RE,r:2},{cN:"keyword",b:"(?:if|in|break|next|repeat|else|for|return|switch|while|try|stop|warning|require|attach|detach|source|setMethod|setClass)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"literal",b:"(?:NA|NA_integer_|NA_real_|NA_character_|NA_complex_)\\b",e:hljs.IMMEDIATE_RE,r:10},{cN:"literal",b:"(?:NULL|TRUE|FALSE|T|F|Inf|NaN)\\b",e:hljs.IMMEDIATE_RE,r:1},{cN:"identifier",b:"[a-zA-Z.][a-zA-Z0-9._]*\\b",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"<\\-(?!\\s*\\d)",e:hljs.IMMEDIATE_RE,r:2},{cN:"operator",b:"\\->|<\\-",e:hljs.IMMEDIATE_RE,r:1},{cN:"operator",b:"%%|~",e:hljs.IMMEDIATE_RE},{cN:"operator",b:">=|<=|==|!=|\\|\\||&&|=|\\+|\\-|\\*|/|\\^|>|<|!|&|\\||\\$|:",e:hljs.IMMEDIATE_RE,r:0},{cN:"operator",b:"%",e:"%",i:"\\n",r:1},{cN:"identifier",b:"`",e:"`",r:0},{cN:"string",b:'"',e:'"',c:[hljs.BE],r:0},{cN:"string",b:"'",e:"'",c:[hljs.BE],r:0},{cN:"paren",b:"[[({\\])}]",e:hljs.IMMEDIATE_RE,r:0}]}};
-hljs.initHighlightingOnLoad();
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
 </script>
 
 
 
-<style type="text/css">
-body, td {
-   font-family: sans-serif;
-   background-color: white;
-   font-size: 13px;
-}
 
-body {
-  max-width: 800px;
-  margin: auto;
-  padding: 1em;
-  line-height: 20px;
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
 }
-
-tt, code, pre {
-   font-family: 'DejaVu Sans Mono', 'Droid Sans Mono', 'Lucida Console', Consolas, Monaco, monospace;
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
 }
-
-h1 {
-   font-size:2.2em;
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
 }
-
-h2 {
-   font-size:1.8em;
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
 }
-
-h3 {
-   font-size:1.4em;
+#TOC ul ul {
+margin-left: -2em;
 }
-
-h4 {
-   font-size:1.0em;
+#TOC li {
+line-height: 16px;
 }
-
-h5 {
-   font-size:0.9em;
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
 }
-
-h6 {
-   font-size:0.8em;
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
 }
-
-a:visited {
-   color: rgb(50%, 0%, 50%);
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
 }
-
-pre, img {
-  max-width: 100%;
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
 }
 pre {
-  overflow-x: auto;
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
 }
-pre code {
-   display: block; padding: 0.5em;
+pre:not([class]) {
+background-color: #f7f7f7;
 }
-
 code {
-  font-size: 92%;
-  border: 1px solid #ccc;
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
 }
-
-code[class] {
-  background-color: #F8F8F8;
+p > code, li > code {
+padding: 2px 0px;
 }
-
-table, td, th {
-  border: none;
+div.figure {
+text-align: center;
 }
-
-blockquote {
-   color:#666666;
-   margin:0;
-   padding-left: 1em;
-   border-left: 0.5em #EEE solid;
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
 }
-
-hr {
-   height: 0px;
-   border-bottom: none;
-   border-top-width: thin;
-   border-top-style: dotted;
-   border-top-color: #999999;
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
 }
-
-@media print {
-   * {
-      background: transparent !important;
-      color: black !important;
-      filter:none !important;
-      -ms-filter: none !important;
-   }
-
-   body {
-      font-size:12pt;
-      max-width:100%;
-   }
-
-   a, a:visited {
-      text-decoration: underline;
-   }
-
-   hr {
-      visibility: hidden;
-      page-break-before: always;
-   }
-
-   pre, blockquote {
-      padding-right: 1em;
-      page-break-inside: avoid;
-   }
-
-   tr, img {
-      page-break-inside: avoid;
-   }
-
-   img {
-      max-width: 100% !important;
-   }
-
-   @page :left {
-      margin: 15mm 20mm 15mm 10mm;
-   }
-
-   @page :right {
-      margin: 15mm 10mm 15mm 20mm;
-   }
-
-   p, h2, h3 {
-      orphans: 3; widows: 3;
-   }
-
-   h2, h3 {
-      page-break-after: avoid;
-   }
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
 }
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
 </style>
+
 
 
 
 </head>
 
 <body>
+
+
+
+
+<h1 class="title toc-ignore">Package datasets</h1>
+<h4 class="author">Tyler Grimes</h4>
+<h4 class="date">2021-12-03</h4>
+
+
+<div id="TOC">
+<ul>
+<li><a href="#reactome-pathways"><span class="toc-section-number">1</span> Reactome pathways</a>
+<ul>
+<li><a href="#subsetting-pathways-using-pathway-names"><span class="toc-section-number">1.1</span> Subsetting pathways using pathway names</a></li>
+<li><a href="#subsetting-pathways-using-genes"><span class="toc-section-number">1.2</span> Subsetting pathways using genes</a></li>
+<li><a href="#p53_pathways-data"><span class="toc-section-number">1.3</span> <code>p53_pathways</code> data</a></li>
+</ul></li>
+<li><a href="#gene-expression-example"><span class="toc-section-number">2</span> Gene expression example</a>
+<ul>
+<li><a href="#meso-data"><span class="toc-section-number">2.1</span> <code>meso</code> data</a>
+<ul>
+<li><a href="#clinical-dataset"><span class="toc-section-number">2.1.1</span> Clinical dataset</a></li>
+<li><a href="#rna-seq-dataset"><span class="toc-section-number">2.1.2</span> RNA-seq dataset</a></li>
+<li><a href="#finalizing"><span class="toc-section-number">2.1.3</span> Finalizing</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#biomart"><span class="toc-section-number">3</span> biomaRt</a></li>
+</ul>
+</div>
+
 <p>This vignette shows how the package datasets were created. The package data includes a list of cancer-related Reactome pathways, <code>p53_pathways</code>, and an example gene expression dataset, <code>glioma</code>. These are provided to be used in examples and for illustrative purposes.</p>
-
-<h1>Reactome pathways</h1>
-
+<div id="reactome-pathways" class="section level1" number="1">
+<h1><span class="header-section-number">1</span> Reactome pathways</h1>
 <p>A list of Reaectome pathways is provided for Homo sapiens (human). This list was initialized using the <code>dnapath::get_reactome_pathways()</code> function.</p>
-
-<pre><code class="r">pathway_list &lt;- dnapath::get_reactome_pathways(&quot;human&quot;)
-</code></pre>
-
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pathway_list <span class="ot">&lt;-</span> dnapath<span class="sc">::</span><span class="fu">get_reactome_pathways</span>(<span class="st">&quot;human&quot;</span>)</span></code></pre></div>
 <pre><code>## Obtaining reactome pathway information for species: Homo sapiens 
-## Combining pathways that have greater than 90 % overlap.
-</code></pre>
-
+## Combining pathways that have greater than 90 % overlap.</code></pre>
 <p>This list contains the gene sets for 885 pathways. Here are the first two pathways:</p>
-
-<pre><code class="r">pathway_list[1:2]
-</code></pre>
-
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>pathway_list[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>]</span></code></pre></div>
 <pre><code>## $`Purine salvage`
 ##  [1] &quot;100&quot;    &quot;132&quot;    &quot;161823&quot; &quot;1633&quot;   &quot;1716&quot;   &quot;270&quot;    &quot;271&quot;    &quot;272&quot;   
 ##  [9] &quot;2766&quot;   &quot;3251&quot;   &quot;353&quot;    &quot;4860&quot;   &quot;51292&quot; 
@@ -226,29 +373,19 @@ hr {
 ## $`Nucleotide salvage`
 ##  [1] &quot;100&quot;    &quot;132&quot;    &quot;151531&quot; &quot;161823&quot; &quot;1633&quot;   &quot;1716&quot;   &quot;1890&quot;   &quot;270&quot;   
 ##  [9] &quot;271&quot;    &quot;272&quot;    &quot;2766&quot;   &quot;3251&quot;   &quot;353&quot;    &quot;4860&quot;   &quot;51292&quot;  &quot;54963&quot; 
-## [17] &quot;7083&quot;   &quot;7084&quot;   &quot;7371&quot;   &quot;7378&quot;   &quot;8226&quot;   &quot;83549&quot;  &quot;978&quot;
-</code></pre>
-
-<p>The list names correspond to the Reactome pathway name. Each pathway provides the entrezgene IDs of all genes in that pathway. For example, from the output above, we see that the first pathway in the list is the &ldquo;purine salvage&rdquo; pathway, and it contains the genes: 100, 132, 161823, etc.</p>
-
+## [17] &quot;7083&quot;   &quot;7084&quot;   &quot;7371&quot;   &quot;7378&quot;   &quot;8226&quot;   &quot;83549&quot;  &quot;978&quot;</code></pre>
+<p>The list names correspond to the Reactome pathway name. Each pathway provides the entrezgene IDs of all genes in that pathway. For example, from the output above, we see that the first pathway in the list is the “purine salvage” pathway, and it contains the genes: 100, 132, 161823, etc.</p>
 <p>In practice, all of these pathways can be used in the <code>dnapath()</code> analysis. However, in some studies we may only be interested in a subset of this list. For example, if we are studying a cancer-related gene expression dataset, we may have a specific interest in cancer-related pathways. There are two ways to obtain a subset from the pathway list: (1) using the pathway names or (2) using the pathway genes. These two approaches are demonstrated in turn.</p>
-
-<h2>Subsetting pathways using pathway names</h2>
-
-<p>Suppose we are interested in pathways that are related to &ldquo;p53&rdquo; or &ldquo;pi3k&rdquo; regulatory processes (these are known cancer-related pathways). One option is to subset pathways based on whether or not the pathway names include these keywords. The <code>grep()</code> function is used to do this:</p>
-
-<pre><code class="r"># Obtain index of pathways containing &quot;p53&quot; or &quot;pi3k&quot; in their name.
-index_pathways &lt;- grep(&quot;((p53)|(pi3k))&quot;, names(pathway_list),
-                       ignore.case = TRUE)
-</code></pre>
-
-<p><code>grep</code> uses the regular expression &ldquo;((p53)|(pi3k))&rdquo;, which says to identify all pathway names that include the phrase &ldquo;p53&rdquo; or &ldquo;pi3k&rdquo;. However, we don&#39;t want to leave out pathways that use capital &ldquo;P53&rdquo; or &ldquo;PI3K&rdquo;, so we set <code>ignore.case = TRUE</code> to ignore the case of the pathway names.</p>
-
-<pre><code class="r"># Subset onto the &quot;p53&quot; and &quot;pi3k&quot; pathways.
-cancer_pathways &lt;- pathway_list[index_pathways]
-cancer_pathways[1:3] # Print out the first three
-</code></pre>
-
+<div id="subsetting-pathways-using-pathway-names" class="section level2" number="1.1">
+<h2><span class="header-section-number">1.1</span> Subsetting pathways using pathway names</h2>
+<p>Suppose we are interested in pathways that are related to “p53” or “pi3k” regulatory processes (these are known cancer-related pathways). One option is to subset pathways based on whether or not the pathway names include these keywords. The <code>grep()</code> function is used to do this:</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Obtain index of pathways containing &quot;p53&quot; or &quot;pi3k&quot; in their name.</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>index_pathways <span class="ot">&lt;-</span> <span class="fu">grep</span>(<span class="st">&quot;((p53)|(pi3k))&quot;</span>, <span class="fu">names</span>(pathway_list),</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>                       <span class="at">ignore.case =</span> <span class="cn">TRUE</span>)</span></code></pre></div>
+<p><code>grep</code> uses the regular expression “((p53)|(pi3k))”, which says to identify all pathway names that include the phrase “p53” or “pi3k”. However, we don’t want to leave out pathways that use capital “P53” or “PI3K”, so we set <code>ignore.case = TRUE</code> to ignore the case of the pathway names.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Subset onto the &quot;p53&quot; and &quot;pi3k&quot; pathways.</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>cancer_pathways <span class="ot">&lt;-</span> pathway_list[index_pathways]</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>cancer_pathways[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>] <span class="co"># Print out the first three</span></span></code></pre></div>
 <pre><code>## $`CD28 dependent PI3K/Akt signaling`
 ##  [1] &quot;10000&quot;  &quot;117145&quot; &quot;1326&quot;   &quot;207&quot;    &quot;208&quot;    &quot;2475&quot;   &quot;253260&quot; &quot;2534&quot;  
 ##  [9] &quot;3932&quot;   &quot;5170&quot;   &quot;5290&quot;   &quot;5295&quot;   &quot;5296&quot;   &quot;55615&quot;  &quot;57761&quot;  &quot;64223&quot; 
@@ -265,38 +402,24 @@ cancer_pathways[1:3] # Print out the first three
 ##  [9] &quot;2475&quot;   &quot;253260&quot; &quot;4193&quot;   &quot;4194&quot;   &quot;472&quot;    &quot;51230&quot;  &quot;5170&quot;   &quot;5515&quot;  
 ## [17] &quot;5516&quot;   &quot;5518&quot;   &quot;5519&quot;   &quot;5527&quot;   &quot;55615&quot;  &quot;6233&quot;   &quot;64223&quot;  &quot;6446&quot;  
 ## [25] &quot;7157&quot;   &quot;7311&quot;   &quot;7314&quot;   &quot;7316&quot;   &quot;7874&quot;   &quot;79109&quot;  &quot;80196&quot;  &quot;890&quot;   
-## [33] &quot;8900&quot;   &quot;900&quot;    &quot;9099&quot;   &quot;983&quot;    &quot;639&quot;
-</code></pre>
-
-<p>Subsetting on these cancer-related pathways results in 19 pathways. </p>
-
-<p>In general, the pathway list obtained from the <code>dnapath::get_reactome_pathways()</code> function can be subset based on the pathway names, as illustrated in this example. Here, we focused on cancer pathways, but the regular expression &ldquo;((p53)|(pi3k))&rdquo; can be replaced to search for any desired pathways. To learn more about the <code>grep()</code> function and regular expression, see <a href="https://bookdown.org/rdpeng/rprogdatascience/regular-expressions.html">chapter 17</a> of R Programming for Data Science by Roger Peng.</p>
-
-<h2>Subsetting pathways using genes</h2>
-
-<p>As in the previous example, suppose we are interested in pathways that are related to &ldquo;p53&rdquo; or &ldquo;pi3k&rdquo;. However, this time we want to identify <em>all</em> pathways that involve the genes, not just pathways that are named after them. (Note that some pathways may contain the p53 gene but not have &ldquo;p53&rdquo; in its name.)</p>
-
-<p>Since the pathway list uses entrezgene IDs, the first step is to find the entrezgene ID for each gene of interest. The ID for P53 is <a href="https://www.ncbi.nlm.nih.gov/gene?cmd=Retrieve&amp;dopt=full_report&amp;list_uids=7157">7157</a>. PI3K actually refers to a family of enzymes; one class of genes in this family include PIK3CA, PIK3CB, PIK3CD, and PIK3CG, which have the entrezgene IDs
-<a href="https://www.ncbi.nlm.nih.gov/gene?cmd=Retrieve&amp;dopt=full_report&amp;list_uids=5290">5290</a>, 
-<a href="https://www.ncbi.nlm.nih.gov/gene?cmd=Retrieve&amp;dopt=full_report&amp;list_uids=5291">5291</a>,
-<a href="https://www.ncbi.nlm.nih.gov/gene?cmd=Retrieve&amp;dopt=full_report&amp;list_uids=5293">5293</a>, and
-<a href="https://www.ncbi.nlm.nih.gov/gene?cmd=Retrieve&amp;dopt=full_report&amp;list_uids=5294">5294</a>.</p>
-
-<pre><code class="r"># Make a vector of all entrezgene IDs that we are interested in.
-genes_of_interest &lt;- c(7157, 5290, 5291, 5293, 5294)
-# Obtain index of pathways containing any genes of interest.
-index_pathways &lt;- which(sapply(pathway_list, function(pathway) {
-  any(genes_of_interest %in% pathway)
-}))
-</code></pre>
-
-<p>The <code>sapply()</code> function is used to loop over each pathway in the pathway list, and for each we determine if any of the genes of interest are in the pathway&#39;s gene set. We end up with a set of indices identifying which pathways contain at least one of the five targeted genes.</p>
-
-<pre><code class="r"># Subset onto pathways containing p53 gene or pi3k family of genes.
-cancer_pathways &lt;- pathway_list[index_pathways]
-cancer_pathways[1:3] # Print out the first three
-</code></pre>
-
+## [33] &quot;8900&quot;   &quot;900&quot;    &quot;9099&quot;   &quot;983&quot;    &quot;639&quot;</code></pre>
+<p>Subsetting on these cancer-related pathways results in 19 pathways.</p>
+<p>In general, the pathway list obtained from the <code>dnapath::get_reactome_pathways()</code> function can be subset based on the pathway names, as illustrated in this example. Here, we focused on cancer pathways, but the regular expression “((p53)|(pi3k))” can be replaced to search for any desired pathways. To learn more about the <code>grep()</code> function and regular expression, see <a href="https://bookdown.org/rdpeng/rprogdatascience/regular-expressions.html">chapter 17</a> of R Programming for Data Science by Roger Peng.</p>
+</div>
+<div id="subsetting-pathways-using-genes" class="section level2" number="1.2">
+<h2><span class="header-section-number">1.2</span> Subsetting pathways using genes</h2>
+<p>As in the previous example, suppose we are interested in pathways that are related to “p53” or “pi3k”. However, this time we want to identify <em>all</em> pathways that involve the genes, not just pathways that are named after them. (Note that some pathways may contain the p53 gene but not have “p53” in its name.)</p>
+<p>Since the pathway list uses entrezgene IDs, the first step is to find the entrezgene ID for each gene of interest. The ID for P53 is <a href="https://www.ncbi.nlm.nih.gov/gene?cmd=Retrieve&amp;dopt=full_report&amp;list_uids=7157">7157</a>. PI3K actually refers to a family of enzymes; one class of genes in this family include PIK3CA, PIK3CB, PIK3CD, and PIK3CG, which have the entrezgene IDs <a href="https://www.ncbi.nlm.nih.gov/gene?cmd=Retrieve&amp;dopt=full_report&amp;list_uids=5290">5290</a>, <a href="https://www.ncbi.nlm.nih.gov/gene?cmd=Retrieve&amp;dopt=full_report&amp;list_uids=5291">5291</a>, <a href="https://www.ncbi.nlm.nih.gov/gene?cmd=Retrieve&amp;dopt=full_report&amp;list_uids=5293">5293</a>, and <a href="https://www.ncbi.nlm.nih.gov/gene?cmd=Retrieve&amp;dopt=full_report&amp;list_uids=5294">5294</a>.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Make a vector of all entrezgene IDs that we are interested in.</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>genes_of_interest <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="dv">7157</span>, <span class="dv">5290</span>, <span class="dv">5291</span>, <span class="dv">5293</span>, <span class="dv">5294</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Obtain index of pathways containing any genes of interest.</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>index_pathways <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="fu">sapply</span>(pathway_list, <span class="cf">function</span>(pathway) {</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">any</span>(genes_of_interest <span class="sc">%in%</span> pathway)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>}))</span></code></pre></div>
+<p>The <code>sapply()</code> function is used to loop over each pathway in the pathway list, and for each we determine if any of the genes of interest are in the pathway’s gene set. We end up with a set of indices identifying which pathways contain at least one of the five targeted genes.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Subset onto pathways containing p53 gene or pi3k family of genes.</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>cancer_pathways <span class="ot">&lt;-</span> pathway_list[index_pathways]</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>cancer_pathways[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>] <span class="co"># Print out the first three</span></span></code></pre></div>
 <pre><code>## $`Activation of BH3-only proteins`
 ##  [1] &quot;10000&quot;  &quot;10018&quot;  &quot;10971&quot;  &quot;140735&quot; &quot;1869&quot;   &quot;207&quot;    &quot;208&quot;    &quot;23368&quot; 
 ##  [9] &quot;27113&quot;  &quot;2810&quot;   &quot;5366&quot;   &quot;5533&quot;   &quot;5534&quot;   &quot;5599&quot;   &quot;572&quot;    &quot;572&quot;   
@@ -319,57 +442,43 @@ cancer_pathways[1:3] # Print out the first three
 ##  [9] &quot;2885&quot;   &quot;3932&quot;   &quot;4067&quot;   &quot;5058&quot;   &quot;5062&quot;   &quot;5063&quot;   &quot;5170&quot;   &quot;5290&quot;  
 ## [17] &quot;5295&quot;   &quot;5296&quot;   &quot;55615&quot;  &quot;57761&quot;  &quot;5879&quot;   &quot;64223&quot;  &quot;6714&quot;   &quot;7409&quot;  
 ## [25] &quot;7525&quot;   &quot;79109&quot;  &quot;8503&quot;   &quot;9020&quot;   &quot;940&quot;    &quot;9402&quot;   &quot;941&quot;    &quot;942&quot;   
-## [33] &quot;998&quot;
-</code></pre>
-
-<p>Subsetting results in 80 pathways that contain at least one of the five cancer-related genes of interest. In general, any set of entrezgene IDs can be used to subset the pathways obtained from the <code>dnapath::get_reactome_pathways()</code> function, as illustrated in this example. </p>
-
-<h2><code>p53_pathways</code> data</h2>
-
+## [33] &quot;998&quot;</code></pre>
+<p>Subsetting results in 80 pathways that contain at least one of the five cancer-related genes of interest. In general, any set of entrezgene IDs can be used to subset the pathways obtained from the <code>dnapath::get_reactome_pathways()</code> function, as illustrated in this example.</p>
+</div>
+<div id="p53_pathways-data" class="section level2" number="1.3">
+<h2><span class="header-section-number">1.3</span> <code>p53_pathways</code> data</h2>
 <p>The <code>dnapath</code> package provides an example pathway list named <code>p53_pathways</code>. This is a small list provided for illustrative purposes and for use in examples. It includes T53 Reactome pathways, which was created using the steps described previously.</p>
-
-<pre><code class="r"># Obtain index of pathways containing &quot;p53&quot; in their name.
-index_pathways &lt;- grep(&quot;(p53)&quot;, names(pathway_list),ignore.case = TRUE)
-p53_pathways &lt;- pathway_list[index_pathways]
-</code></pre>
-
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Obtain index of pathways containing &quot;p53&quot; in their name.</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>index_pathways <span class="ot">&lt;-</span> <span class="fu">grep</span>(<span class="st">&quot;(p53)&quot;</span>, <span class="fu">names</span>(pathway_list),<span class="at">ignore.case =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>p53_pathways <span class="ot">&lt;-</span> pathway_list[index_pathways]</span></code></pre></div>
 <p>The dataset was compressed and saved for the package using the code:</p>
-
-<pre><code class="R"># Not run: Only for building the package.
-usethis::use_data(p53_pathways)
-tools::resaveRdaFiles(file.path(&quot;data&quot;), compress = &quot;auto&quot;)
-tools::checkRdaFiles(file.path(&quot;data&quot;))
-</code></pre>
-
-<h1>Gene expression example</h1>
-
-<p>A small gene expression dataset is provided in <code>dnapath</code>. This example data is a Mesothelioma dataset containing gene expression and clinical data that were generated by <a href="https://www.cancer.gov/about-nci/organization/ccg/research/structural-genomics/tcga">The Cancer Genome Atlas</a> (TCGA) and is downloaded using the [LinkedOmics] portal(<a href="http://www.linkedomics.org/data_download/TCGA-GBMLGG/">http://www.linkedomics.org/data_download/TCGA-GBMLGG/</a>). </p>
-
-<h2><code>meso</code> data</h2>
-
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Not run: Only for building the package.</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>usethis<span class="sc">::</span><span class="fu">use_data</span>(p53_pathways)</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>tools<span class="sc">::</span><span class="fu">resaveRdaFiles</span>(<span class="fu">file.path</span>(<span class="st">&quot;data&quot;</span>), <span class="at">compress =</span> <span class="st">&quot;auto&quot;</span>)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>tools<span class="sc">::</span><span class="fu">checkRdaFiles</span>(<span class="fu">file.path</span>(<span class="st">&quot;data&quot;</span>))</span></code></pre></div>
+</div>
+</div>
+<div id="gene-expression-example" class="section level1" number="2">
+<h1><span class="header-section-number">2</span> Gene expression example</h1>
+<p>A small gene expression dataset is provided in <code>dnapath</code>. This example data is a Mesothelioma dataset containing gene expression and clinical data that were generated by <a href="https://www.cancer.gov/about-nci/organization/ccg/research/structural-genomics/tcga">The Cancer Genome Atlas</a> (TCGA) and is downloaded using the <a href="http://www.linkedomics.org/data_download/TCGA-GBMLGG/">LinkedOmics portal</a>.</p>
+<div id="meso-data" class="section level2" number="2.1">
+<h2><span class="header-section-number">2.1</span> <code>meso</code> data</h2>
 <p>The first step is to download and process the clinical and gene expression dataset from LinkedOmics.</p>
-
-<pre><code class="r">file_clinical &lt;- paste0(&quot;http://linkedomics.org/data_download/TCGA-MESO/Human__&quot;,
-                        &quot;TCGA_MESO__MS__Clinical__Clinical__01_28_2016__BI__&quot;,
-                        &quot;Clinical__Firehose.tsi&quot;)
-file_rnaseq &lt;- paste0(&quot;http://linkedomics.org/data_download/TCGA-MESO/Human__&quot;,
-                      &quot;TCGA_MESO__UNC__RNAseq__HiSeq_RNA__01_28_2016__BI__Gene&quot;,
-                      &quot;__Firehose_RSEM_log2.cct.gz&quot;)
-
-clinical &lt;- readr::read_tsv(file_clinical)
-rnaseq &lt;- readr::read_tsv(file_rnaseq)
-</code></pre>
-
-<h3>Clinical dataset</h3>
-
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>file_clinical <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;http://linkedomics.org/data_download/TCGA-MESO/Human__&quot;</span>,</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>                        <span class="st">&quot;TCGA_MESO__MS__Clinical__Clinical__01_28_2016__BI__&quot;</span>,</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>                        <span class="st">&quot;Clinical__Firehose.tsi&quot;</span>)</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>file_rnaseq <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;http://linkedomics.org/data_download/TCGA-MESO/Human__&quot;</span>,</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>                      <span class="st">&quot;TCGA_MESO__UNC__RNAseq__HiSeq_RNA__01_28_2016__BI__Gene&quot;</span>,</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>                      <span class="st">&quot;__Firehose_RSEM_log2.cct.gz&quot;</span>)</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>clinical <span class="ot">&lt;-</span> readr<span class="sc">::</span><span class="fu">read_tsv</span>(file_clinical)</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>rnaseq <span class="ot">&lt;-</span> readr<span class="sc">::</span><span class="fu">read_tsv</span>(file_rnaseq)</span></code></pre></div>
+<div id="clinical-dataset" class="section level3" number="2.1.1">
+<h3><span class="header-section-number">2.1.1</span> Clinical dataset</h3>
 <p>The differential network analysis performed using <code>dnapath()</code> compares the gene-gene association structure between two groups (populations). In the Mesothelioma dataset, the clinical data can be used to identify two subgroups of interest. In this example dataset, the tumor stage (classified as stage i, ii, iii, or iv) will be used to partition the data. In practice, <code>dnapath()</code> could be used make pair-wise comparisons across these tumor stages, or perhaps some stages can be combined together. But for the purpose of creating a small, example dataset, we will only look at tumor stages ii and iv.</p>
-
-<p>The first step is to process the downloaded data so that it contains one column of sample IDs and one column of tumor stage. </p>
-
-<pre><code class="r"># First, we can glimpse at the raw data to see how it is structured.
-clinical[1:5, 1:3]
-</code></pre>
-
+<p>The first step is to process the downloaded data so that it contains one column of sample IDs and one column of tumor stage.</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># First, we can glimpse at the raw data to see how it is structured.</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>clinical[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>]</span></code></pre></div>
 <pre><code>## # A tibble: 5 × 3
 ##   attrib_name       TCGA.3H.AB3O TCGA.3H.AB3S
 ##   &lt;chr&gt;             &lt;chr&gt;        &lt;chr&gt;       
@@ -377,21 +486,17 @@ clinical[1:5, 1:3]
 ## 2 pathologic_stage  stageiii     stageii     
 ## 3 pathology_T_stage t3           t2          
 ## 4 pathology_N_stage n0           n0          
-## 5 pathology_M_stage m0           m0
-</code></pre>
-
-<pre><code class="r"># The columns contain samples, and rows contain different variables
-# We want the transpose of this.
-variable_names &lt;- clinical$attrib_name # Store the variable names.
-
-# Transpose the matrix so that columns correspond to variables.
-clinical &lt;- t(clinical[, -1]) # Don&#39;t include the &quot;attrib_name&quot; column as a row.
-colnames(clinical) &lt;- variable_names # Rename columns using variable names.
-
-# Glimpse at the transposed dataset:
-clinical[1:4, 1:4]
-</code></pre>
-
+## 5 pathology_M_stage m0           m0</code></pre>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The columns contain samples, and rows contain different variables</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="co"># We want the transpose of this.</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>variable_names <span class="ot">&lt;-</span> clinical<span class="sc">$</span>attrib_name <span class="co"># Store the variable names.</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Transpose the matrix so that columns correspond to variables.</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>clinical <span class="ot">&lt;-</span> <span class="fu">t</span>(clinical[, <span class="sc">-</span><span class="dv">1</span>]) <span class="co"># Don&#39;t include the &quot;attrib_name&quot; column as a row.</span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(clinical) <span class="ot">&lt;-</span> variable_names <span class="co"># Rename columns using variable names.</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Glimpse at the transposed dataset:</span></span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>clinical[<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>]</span></code></pre></div>
 <pre><code>##              years_to_birth pathologic_stage pathology_T_stage
 ## TCGA.3H.AB3O &quot;58&quot;           &quot;stageiii&quot;       &quot;t3&quot;             
 ## TCGA.3H.AB3S &quot;69&quot;           &quot;stageii&quot;        &quot;t2&quot;             
@@ -401,61 +506,44 @@ clinical[1:4, 1:4]
 ## TCGA.3H.AB3O &quot;n0&quot;             
 ## TCGA.3H.AB3S &quot;n0&quot;             
 ## TCGA.3U.A98E &quot;n2&quot;             
-## TCGA.3U.A98G &quot;n0&quot;
-</code></pre>
-
-<pre><code class="r"># Now that the rows correspond to subjects and columns to variables,
-# the next step is to add a new column that contains the sample IDs. 
-
-clinical &lt;- cbind(ID = rownames(clinical), clinical)
-rownames(clinical) &lt;- NULL # Remove the row names.
-
-# Glimpse at the data.
-clinical[1:4, 1:4]
-</code></pre>
-
+## TCGA.3U.A98G &quot;n0&quot;</code></pre>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Now that the rows correspond to subjects and columns to variables,</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="co"># the next step is to add a new column that contains the sample IDs. </span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>clinical <span class="ot">&lt;-</span> <span class="fu">cbind</span>(<span class="at">ID =</span> <span class="fu">rownames</span>(clinical), clinical)</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(clinical) <span class="ot">&lt;-</span> <span class="cn">NULL</span> <span class="co"># Remove the row names.</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Glimpse at the data.</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>clinical[<span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">4</span>]</span></code></pre></div>
 <pre><code>##      ID             years_to_birth pathologic_stage pathology_T_stage
 ## [1,] &quot;TCGA.3H.AB3O&quot; &quot;58&quot;           &quot;stageiii&quot;       &quot;t3&quot;             
 ## [2,] &quot;TCGA.3H.AB3S&quot; &quot;69&quot;           &quot;stageii&quot;        &quot;t2&quot;             
 ## [3,] &quot;TCGA.3U.A98E&quot; &quot;71&quot;           &quot;stageiv&quot;        &quot;t4&quot;             
-## [4,] &quot;TCGA.3U.A98G&quot; &quot;71&quot;           &quot;stageiv&quot;        &quot;t4&quot;
-</code></pre>
-
-<pre><code class="r"># For the example dataset, we are only interested in ID and tumor stage.
-clinical &lt;- clinical[, c(&quot;ID&quot;, &quot;pathologic_stage&quot;)]
-# The two groups that will be compared are stage 2 and stage 4.
-# Subset rows onto those that have stage 2 or stage 4.
-clinical &lt;- clinical[clinical[, &quot;pathologic_stage&quot;] %in% c(&quot;stageii&quot;, &quot;stageiv&quot;), ]
-clinical[1:5, ]
-</code></pre>
-
+## [4,] &quot;TCGA.3U.A98G&quot; &quot;71&quot;           &quot;stageiv&quot;        &quot;t4&quot;</code></pre>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co"># For the example dataset, we are only interested in ID and tumor stage.</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>clinical <span class="ot">&lt;-</span> clinical[, <span class="fu">c</span>(<span class="st">&quot;ID&quot;</span>, <span class="st">&quot;pathologic_stage&quot;</span>)]</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a><span class="co"># The two groups that will be compared are stage 2 and stage 4.</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Subset rows onto those that have stage 2 or stage 4.</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>clinical <span class="ot">&lt;-</span> clinical[clinical[, <span class="st">&quot;pathologic_stage&quot;</span>] <span class="sc">%in%</span> <span class="fu">c</span>(<span class="st">&quot;stageii&quot;</span>, <span class="st">&quot;stageiv&quot;</span>), ]</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>clinical[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, ]</span></code></pre></div>
 <pre><code>##      ID             pathologic_stage
 ## [1,] &quot;TCGA.3H.AB3S&quot; &quot;stageii&quot;       
 ## [2,] &quot;TCGA.3U.A98E&quot; &quot;stageiv&quot;       
 ## [3,] &quot;TCGA.3U.A98G&quot; &quot;stageiv&quot;       
 ## [4,] &quot;TCGA.SC.AA5Z&quot; &quot;stageiv&quot;       
-## [5,] &quot;TCGA.UT.A88D&quot; &quot;stageii&quot;
-</code></pre>
-
-<pre><code class="r"># We are left with only stage 2 and stage 4 samples:
-table(clinical[, 2])
-</code></pre>
-
+## [5,] &quot;TCGA.UT.A88D&quot; &quot;stageii&quot;</code></pre>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># We are left with only stage 2 and stage 4 samples:</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(clinical[, <span class="dv">2</span>])</span></code></pre></div>
 <pre><code>## 
 ## stageii stageiv 
-##      16      16
-</code></pre>
-
-<p>The final dataset contains 16 samples for group 1 (tumor stage ii) and 16 samples for group 2 (tumor stage iv). Note that the groups don&#39;t need equal sample sizes, but they happen to be equal in these data.</p>
-
-<h3>RNA-seq dataset</h3>
-
+##      16      16</code></pre>
+<p>The final dataset contains 16 samples for group 1 (tumor stage ii) and 16 samples for group 2 (tumor stage iv). Note that the groups don’t need equal sample sizes, but they happen to be equal in these data.</p>
+</div>
+<div id="rna-seq-dataset" class="section level3" number="2.1.2">
+<h3><span class="header-section-number">2.1.2</span> RNA-seq dataset</h3>
 <p>The second step is to process the gene expression dataset. The LinkedOmics portal provides normalized counts from the RNA-seq experiments (the data are not raw reads, which must be aligned and annotated in order to obtain gene expression counts). For the purpose of creating a small example dataset, these data will be subset onto the 32 samples obtained in the previous section, and onto the 160 genes in the <code>cancer_pathway</code> list.</p>
-
-<pre><code class="r"># First, we can glimps at the raw data to see how it is structured.
-rnaseq[1:5, 1:5]
-</code></pre>
-
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># First, we can glimps at the raw data to see how it is structured.</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>rnaseq[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>]</span></code></pre></div>
 <pre><code>## # A tibble: 5 × 5
 ##   attrib_name TCGA.3H.AB3K TCGA.3H.AB3L TCGA.3H.AB3M TCGA.3H.AB3O
 ##   &lt;chr&gt;              &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;        &lt;dbl&gt;
@@ -463,151 +551,99 @@ rnaseq[1:5, 1:5]
 ## 2 A1CF               0.687         0           0.462         0   
 ## 3 A2BP1              6.21          3.74        6.92          1.30
 ## 4 A2LD1              5.26          5.70        7.49          7.03
-## 5 A2ML1              0.687         0           0             0
-</code></pre>
-
-<pre><code class="r"># As with the clinical data, we need to transpose the raw data so that
-# samples are in the rows.
-gene_symbols &lt;- rnaseq$attrib_name # Store the gene names
-
-rnaseq &lt;- t(rnaseq[, -1])
-colnames(rnaseq) &lt;- gene_symbols
-
-rnaseq[1:5, 1:5]
-</code></pre>
-
+## 5 A2ML1              0.687         0           0             0</code></pre>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="co"># As with the clinical data, we need to transpose the raw data so that</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a><span class="co"># samples are in the rows.</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>gene_symbols <span class="ot">&lt;-</span> rnaseq<span class="sc">$</span>attrib_name <span class="co"># Store the gene names</span></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>rnaseq <span class="ot">&lt;-</span> <span class="fu">t</span>(rnaseq[, <span class="sc">-</span><span class="dv">1</span>])</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(rnaseq) <span class="ot">&lt;-</span> gene_symbols</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>rnaseq[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>]</span></code></pre></div>
 <pre><code>##                A1BG   A1CF  A2BP1  A2LD1  A2ML1
 ## TCGA.3H.AB3K 6.2508 0.6869 6.2128 5.2615 0.6869
 ## TCGA.3H.AB3L 5.0232 0.0000 3.7424 5.6967 0.0000
 ## TCGA.3H.AB3M 8.0151 0.4622 6.9154 7.4918 0.0000
 ## TCGA.3H.AB3O 6.5719 0.0000 1.2995 7.0304 0.0000
-## TCGA.3H.AB3S 5.2770 0.0000 6.7363 7.0906 0.0000
-</code></pre>
-
-<pre><code class="r"># Check if all 32 clinical samples contain gene expression data.
-all(clinical[, &quot;ID&quot;] %in% rownames(rnaseq))
-</code></pre>
-
-<pre><code>## [1] TRUE
-</code></pre>
-
-<pre><code class="r"># Subset the rnaseq data onto those in the clinical data
-rnaseq &lt;- rnaseq[rownames(rnaseq) %in% clinical[, &quot;ID&quot;], ]
-
-# Finally, we must make sure the two dataset are aligned.
-# There are many ways to do this, here is one:
-#   For each ID in the clinical dataset, find the corresponding row in rnaseq.
-#   The rows are then reordered to match the IDs in clinical.
-rnaseq &lt;- rnaseq[sapply(clinical[, &quot;ID&quot;], 
-                        function(ID) which(rownames(rnaseq) == ID)), ]
-
-# Check that the IDs match:
-all(rownames(rnaseq) == clinical[, &quot;ID&quot;])
-</code></pre>
-
-<pre><code>## [1] TRUE
-</code></pre>
-
-<pre><code class="r">rnaseq[1:5, 1:5]
-</code></pre>
-
+## TCGA.3H.AB3S 5.2770 0.0000 6.7363 7.0906 0.0000</code></pre>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Check if all 32 clinical samples contain gene expression data.</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(clinical[, <span class="st">&quot;ID&quot;</span>] <span class="sc">%in%</span> <span class="fu">rownames</span>(rnaseq))</span></code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Subset the rnaseq data onto those in the clinical data</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>rnaseq <span class="ot">&lt;-</span> rnaseq[<span class="fu">rownames</span>(rnaseq) <span class="sc">%in%</span> clinical[, <span class="st">&quot;ID&quot;</span>], ]</span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Finally, we must make sure the two dataset are aligned.</span></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a><span class="co"># There are many ways to do this, here is one:</span></span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a><span class="co">#   For each ID in the clinical dataset, find the corresponding row in rnaseq.</span></span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a><span class="co">#   The rows are then reordered to match the IDs in clinical.</span></span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>rnaseq <span class="ot">&lt;-</span> rnaseq[<span class="fu">sapply</span>(clinical[, <span class="st">&quot;ID&quot;</span>], </span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>                        <span class="cf">function</span>(ID) <span class="fu">which</span>(<span class="fu">rownames</span>(rnaseq) <span class="sc">==</span> ID)), ]</span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Check that the IDs match:</span></span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a><span class="fu">all</span>(<span class="fu">rownames</span>(rnaseq) <span class="sc">==</span> clinical[, <span class="st">&quot;ID&quot;</span>])</span></code></pre></div>
+<pre><code>## [1] TRUE</code></pre>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>rnaseq[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>]</span></code></pre></div>
 <pre><code>##                A1BG   A1CF  A2BP1  A2LD1 A2ML1
 ## TCGA.3H.AB3S 5.2770 0.0000 6.7363 7.0906     0
 ## TCGA.3U.A98E 4.1398 0.0000 6.0186 5.8955     0
 ## TCGA.3U.A98G 7.9146 0.0000 2.7608 6.8913     0
 ## TCGA.SC.AA5Z 5.8400 0.0000 7.3606 5.7489     0
-## TCGA.UT.A88D 6.1513 0.6561 4.2798 5.1120     0
-</code></pre>
-
+## TCGA.UT.A88D 6.1513 0.6561 4.2798 5.1120     0</code></pre>
 <p>The final step of processing the gene expression data is to subset the columns to the genes contained in the <code>cancer_pathway</code> list. However, the raw data provide gene symbols rather than entrezgene IDs (which the Reactome pathways use). So, we must either relabel the gene symbols in the <code>rnaseq</code> dataset to entrezgene IDs, or relabel the entrezgene IDs in <code>cancer_pathway</code> to contain gene symbols. Either of these operations can be easily carried out using the <code>symbol_to_entrez()</code>, <code>entrez_to_symbol()</code>, and <code>rename_genes()</code> functions provided in the package. These two approaches are briefly demonstrated next.</p>
-
 <blockquote>
 <p><strong>Note:</strong> Internet connection is required to connect to biomaRt, which the <code>entrez_to_symbol</code> and <code>symbol_to_entrez</code> methods use to map entrezgene IDs and gene symbols. The <code>dir_save</code> argument can be set when running these to save the ID mapping obtained from biomaRt in the specified directory. This way, the mapping can be obtained once (using the internet connection) and accessed from memory in all future calls of these functions. The temporary directory <code>tempdir()</code> is used in this example.</p>
 </blockquote>
-
 <p>First, we show how to convert gene symbols in the gene expression dataset to entrezgene IDs.</p>
-
-<pre><code class="r"># Convert gene symbols -&gt; entrezgene IDs
-gene_symbols &lt;- colnames(rnaseq) # Extract the gene symbols to relabel.
-gene_mat &lt;- symbol_to_entrez(gene_symbols, &quot;human&quot;,
-                             dir_save = tempdir()) # Obtain mapping.
-</code></pre>
-
-<pre><code>##  - loading gene info from /var/folders/vb/115zgf4x28vf40dccy9mj5hw0000gn/T//RtmpVwQnTV/entrez_to_hsapiens.rds
-</code></pre>
-
-<pre><code class="r">gene_mat[1:5, ]
-</code></pre>
-
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert gene symbols -&gt; entrezgene IDs</span></span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>gene_symbols <span class="ot">&lt;-</span> <span class="fu">colnames</span>(rnaseq) <span class="co"># Extract the gene symbols to relabel.</span></span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>gene_mat <span class="ot">&lt;-</span> <span class="fu">symbol_to_entrez</span>(gene_symbols, <span class="st">&quot;human&quot;</span>,</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>                             <span class="at">dir_save =</span> <span class="fu">tempdir</span>()) <span class="co"># Obtain mapping.</span></span></code></pre></div>
+<pre><code>##  - loading gene info from /var/folders/vb/115zgf4x28vf40dccy9mj5hw0000gn/T//RtmpKgzacH/entrez_to_hsapiens.rds</code></pre>
+<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>gene_mat[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, ]</span></code></pre></div>
 <pre><code>##   hgnc_symbol entrezgene_id
 ## 1        A1BG             1
 ## 2        A1CF         29974
 ## 3       A2BP1            -1
 ## 4       A2LD1            -1
-## 5       A2ML1        144568
-</code></pre>
-
-<pre><code class="r"># The rename_genes() method is a multipurpose function that can be used to rename 
-# the genes in a vector (the current case), a pathway list, or the &#39;dnapath_list&#39;
-# object that is returned from dnapath() after performing the differential
-# network analysis.
-gene_entrez &lt;- rename_genes(gene_symbols, gene_mat) # Rename the symbols.
-colnames(rnaseq) &lt;- gene_entrez # Update the columns using the entrezgene IDs.
-rnaseq[1:5, 1:5] # Columns now contain entrezgene IDs
-</code></pre>
-
+## 5       A2ML1        144568</code></pre>
+<div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="co"># The rename_genes() method is a multipurpose function that can be used to rename </span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="co"># the genes in a vector (the current case), a pathway list, or the &#39;dnapath_list&#39;</span></span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a><span class="co"># object that is returned from dnapath() after performing the differential</span></span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a><span class="co"># network analysis.</span></span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>gene_entrez <span class="ot">&lt;-</span> <span class="fu">rename_genes</span>(gene_symbols, gene_mat) <span class="co"># Rename the symbols.</span></span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(rnaseq) <span class="ot">&lt;-</span> gene_entrez <span class="co"># Update the columns using the entrezgene IDs.</span></span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>rnaseq[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>] <span class="co"># Columns now contain entrezgene IDs</span></span></code></pre></div>
 <pre><code>##                   1  29974     -1     -1 144568
 ## TCGA.3H.AB3S 5.2770 0.0000 6.7363 7.0906      0
 ## TCGA.3U.A98E 4.1398 0.0000 6.0186 5.8955      0
 ## TCGA.3U.A98G 7.9146 0.0000 2.7608 6.8913      0
 ## TCGA.SC.AA5Z 5.8400 0.0000 7.3606 5.7489      0
-## TCGA.UT.A88D 6.1513 0.6561 4.2798 5.1120      0
-</code></pre>
-
-<p>This is the approach used to create the <code>meso</code> data that is provided in this package. In general, it is advised to use entrezgene IDs throughout the analysis pipeline, and <strong>only convert to symbols at the very end</strong>. Entrezgene IDs are unique identifiers for each gene, whereas gene symbols can sometimes be ambiguous. This ambiguity can lead to information loss if used early on the analysis. For example, notice the third column in above output, the &ldquo;A2BP1&rdquo; gene, was not mapped to an entrezgene ID. This is because &ldquo;A2BP1&rdquo; is an alias for the RBFOX1 gene. The <code>symbol_to_entrez()</code> function obtains a mapping for RBFOX1 but not for the alias A2BP1. Because an entrezgene ID was not identified for A2BP1, it will not be identified in any of the pathways during the differential network analysis. </p>
-
-<p>Gene symbols should only be considerd at the end of the analysis. It can be conventient to rename the IDs into symbols, since symbols are more recognizable for viewing and interpreting the results. </p>
-
+## TCGA.UT.A88D 6.1513 0.6561 4.2798 5.1120      0</code></pre>
+<p>This is the approach used to create the <code>meso</code> data that is provided in this package. In general, it is advised to use entrezgene IDs throughout the analysis pipeline, and <strong>only convert to symbols at the very end</strong>. Entrezgene IDs are unique identifiers for each gene, whereas gene symbols can sometimes be ambiguous. This ambiguity can lead to information loss if used early on the analysis. For example, notice the third column in above output, the “A2BP1” gene, was not mapped to an entrezgene ID. This is because “A2BP1” is an alias for the RBFOX1 gene. The <code>symbol_to_entrez()</code> function obtains a mapping for RBFOX1 but not for the alias A2BP1. Because an entrezgene ID was not identified for A2BP1, it will not be identified in any of the pathways during the differential network analysis.</p>
+<p>Gene symbols should only be considerd at the end of the analysis. It can be conventient to rename the IDs into symbols, since symbols are more recognizable for viewing and interpreting the results.</p>
 <p><strong>Important note:</strong> In the Mesothelioma dataset, we are utilizing summarized gene expression counts as opposed to raw RNA-sequencing reads. If the raw reads are unavailable, then the user may not be able to control whether or not the genes are entrezgene IDs or gene symbols. In this case, we must be aware of the limitations and take caution if many gene symbols fail to map to entrezgene IDs. However, if raw reads are available, then it is recommended to align and annotate the reads using entrezgene IDs when obtaining the expression counts.</p>
-
 <p>To finish the processing, the columns of <code>rnaseq</code> are subset onto the genes in <code>p53_pathways</code>.</p>
-
-<pre><code class="r"># Subset the columns onto only those genes contained in &#39;p53_pathways&#39;
-index_genes &lt;- which(colnames(rnaseq) %in% get_genes(p53_pathways))
-rnaseq &lt;- rnaseq[, index_genes]
-dim(rnaseq) # 32 samples with 150 genes.
-</code></pre>
-
-<pre><code>## [1]  32 148
-</code></pre>
-
+<div class="sourceCode" id="cb40"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Subset the columns onto only those genes contained in &#39;p53_pathways&#39;</span></span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>index_genes <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="fu">colnames</span>(rnaseq) <span class="sc">%in%</span> <span class="fu">get_genes</span>(p53_pathways))</span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>rnaseq <span class="ot">&lt;-</span> rnaseq[, index_genes]</span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(rnaseq) <span class="co"># 32 samples with 150 genes.</span></span></code></pre></div>
+<pre><code>## [1]  32 149</code></pre>
 <p>For completeness, we will show how to convert the entrezgene IDs in the pathway list into gene symbols.</p>
-
-<pre><code class="r"># Convert entrezgene IDs -&gt; gene symbols
-gene_entrez &lt;- get_genes(p53_pathways) # Extract genes from pathway list.
-gene_mat &lt;- entrez_to_symbol(gene_entrez, &quot;human&quot;, 
-                             dir_save = tempdir()) # Obtain mapping.
-</code></pre>
-
-<pre><code>##  - loading gene info from /var/folders/vb/115zgf4x28vf40dccy9mj5hw0000gn/T//RtmpVwQnTV/entrez_to_hsapiens.rds
-</code></pre>
-
-<pre><code class="r">gene_mat[1:5, ]
-</code></pre>
-
+<div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert entrezgene IDs -&gt; gene symbols</span></span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>gene_entrez <span class="ot">&lt;-</span> <span class="fu">get_genes</span>(p53_pathways) <span class="co"># Extract genes from pathway list.</span></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>gene_mat <span class="ot">&lt;-</span> <span class="fu">entrez_to_symbol</span>(gene_entrez, <span class="st">&quot;human&quot;</span>, </span>
+<span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>                             <span class="at">dir_save =</span> <span class="fu">tempdir</span>()) <span class="co"># Obtain mapping.</span></span></code></pre></div>
+<pre><code>##  - loading gene info from /var/folders/vb/115zgf4x28vf40dccy9mj5hw0000gn/T//RtmpKgzacH/entrez_to_hsapiens.rds</code></pre>
+<div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>gene_mat[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, ]</span></code></pre></div>
 <pre><code>##   entrezgene_id hgnc_symbol
 ## 1         10000        AKT3
 ## 2          1017        CDK2
 ## 3          1029      CDKN2A
 ## 4         11200       CHEK2
-## 5        117584        RFFL
-</code></pre>
-
-<pre><code class="r"># Convert the entrezgene IDs into gene symbols in the pathway list.
-new_pathway_list &lt;- rename_genes(p53_pathways, gene_mat) 
-new_pathway_list[1:2] # Print the first two pathways.
-</code></pre>
-
+## 5        117584        RFFL</code></pre>
+<div class="sourceCode" id="cb46"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert the entrezgene IDs into gene symbols in the pathway list.</span></span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>new_pathway_list <span class="ot">&lt;-</span> <span class="fu">rename_genes</span>(p53_pathways, gene_mat) </span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>new_pathway_list[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>] <span class="co"># Print the first two pathways.</span></span></code></pre></div>
 <pre><code>## $`Regulation of TP53 Degradation (See also: Regulation of TP53 Expression and Degradation)`
 ##  [1] &quot;AKT3&quot;    &quot;CDK2&quot;    &quot;CDKN2A&quot;  &quot;CHEK2&quot;   &quot;RFFL&quot;    &quot;DAXX&quot;    &quot;AKT1&quot;   
 ##  [8] &quot;AKT2&quot;    &quot;MTOR&quot;    &quot;RICTOR&quot;  &quot;MDM2&quot;    &quot;MDM4&quot;    &quot;ATM&quot;     &quot;PHF20&quot;  
@@ -621,54 +657,59 @@ new_pathway_list[1:2] # Print the first two pathways.
 ##  [8] &quot;BRPF3&quot;   &quot;BRD7&quot;    &quot;HDAC1&quot;   &quot;HDAC2&quot;   &quot;ING2&quot;    &quot;PIN1&quot;    &quot;PIP4K2A&quot;
 ## [15] &quot;MBD3&quot;    &quot;PML&quot;     &quot;GATAD2A&quot; &quot;MAP2K6&quot;  &quot;GATAD2B&quot; &quot;RBBP4&quot;   &quot;RBBP7&quot;  
 ## [22] &quot;MEAF6&quot;   &quot;TP53&quot;    &quot;BRPF1&quot;   &quot;PIP4K2C&quot; &quot;KAT6A&quot;   &quot;PIP4K2B&quot; &quot;ING5&quot;   
-## [29] &quot;PIP4P1&quot;  &quot;MTA2&quot;
-</code></pre>
-
-<h3>Finalizing</h3>
-
-<p>The <code>dnapath()</code> function requires either a list of two gene expression datasets (each corresponding to a different group), or a single gene expression data and a &#39;group&#39; vector that indicates which rows belong to which group. The <code>meso</code> data is formatted using the second option. The current <code>rnaseq</code> dataset that we have processed contains samples from both groups; the group information can be obtained from the <code>clinical</code> dataset. These two pieces of information can be conveniently stored as a list.</p>
-
-<pre><code class="r">meso &lt;- list(gene_expression = rnaseq,
-             groups = clinical[, &quot;pathologic_stage&quot;])
-</code></pre>
-
+## [29] &quot;PIP4P1&quot;  &quot;MTA2&quot;</code></pre>
+</div>
+<div id="finalizing" class="section level3" number="2.1.3">
+<h3><span class="header-section-number">2.1.3</span> Finalizing</h3>
+<p>The <code>dnapath()</code> function requires either a list of two gene expression datasets (each corresponding to a different group), or a single gene expression data and a ‘group’ vector that indicates which rows belong to which group. The <code>meso</code> data is formatted using the second option. The current <code>rnaseq</code> dataset that we have processed contains samples from both groups; the group information can be obtained from the <code>clinical</code> dataset. These two pieces of information can be conveniently stored as a list.</p>
+<div class="sourceCode" id="cb48"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a>meso <span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">gene_expression =</span> rnaseq,</span>
+<span id="cb48-2"><a href="#cb48-2" aria-hidden="true" tabindex="-1"></a>             <span class="at">groups =</span> clinical[, <span class="st">&quot;pathologic_stage&quot;</span>])</span></code></pre></div>
 <p>The list was compressed and saved for the package using the code:</p>
-
-<pre><code class="R"># Not run: Only for building the package.
-usethis::use_data(meso)
-tools::resaveRdaFiles(file.path(&quot;data&quot;), compress = &quot;auto&quot;)
-tools::checkRdaFiles(file.path(&quot;data&quot;))
-</code></pre>
-
-<h1>biomaRt</h1>
-
+<div class="sourceCode" id="cb49"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb49-1"><a href="#cb49-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Not run: Only for building the package.</span></span>
+<span id="cb49-2"><a href="#cb49-2" aria-hidden="true" tabindex="-1"></a>usethis<span class="sc">::</span><span class="fu">use_data</span>(meso)</span>
+<span id="cb49-3"><a href="#cb49-3" aria-hidden="true" tabindex="-1"></a>tools<span class="sc">::</span><span class="fu">resaveRdaFiles</span>(<span class="fu">file.path</span>(<span class="st">&quot;data&quot;</span>), <span class="at">compress =</span> <span class="st">&quot;auto&quot;</span>)</span>
+<span id="cb49-4"><a href="#cb49-4" aria-hidden="true" tabindex="-1"></a>tools<span class="sc">::</span><span class="fu">checkRdaFiles</span>(<span class="fu">file.path</span>(<span class="st">&quot;data&quot;</span>))</span></code></pre></div>
+</div>
+</div>
+</div>
+<div id="biomart" class="section level1" number="3">
+<h1><span class="header-section-number">3</span> biomaRt</h1>
 <p>The <code>biomaRt</code> package is used to link gene symbols with entrezgene IDs. The <code>entrez_to_symbol()</code> and <code>symbol_to_entrez()</code> functions require an internet connection to connect with the biomaRt database.</p>
-
 <p>This package contains an instance of the mapping between HGNC gene symbols and entregene IDs, which will be used if internet access is not available or if the <code>biomaRt</code> package is not installed. However, this dataset will not be applicable to species other than <em>hsapiens</em> and may not contain the most up-to-date mapping. A warning is given when it is used.</p>
-
-<pre><code class="R"># Not run: Internet access and `biomaRt` package is required.
-mart &lt;- biomaRt::useMart(biomart = &quot;ensembl&quot;, 
-                         dataset = &quot;hsapiens_gene_ensembl&quot;)
-
-biomart_hsapiens &lt;- biomaRt::getBM(attributes = c(&quot;entrezgene_id&quot;, &quot;hgnc_symbol&quot;),
-                                   mart = mart)
-
-library(dplyr) # For pipe operator &quot;%&gt;%&quot;.
-biomart_hsapiens %&gt;%
-  dplyr::filter(!is.na(entrezgene_id)) %&gt;%
-  dplyr::group_by(entrezgene_id) %&gt;%
-  dplyr::summarise(across(everything(), dplyr::first)) -&gt;
-  biomart_hsapiens
-</code></pre>
-
+<div class="sourceCode" id="cb50"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb50-1"><a href="#cb50-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Not run: Internet access and `biomaRt` package is required.</span></span>
+<span id="cb50-2"><a href="#cb50-2" aria-hidden="true" tabindex="-1"></a>mart <span class="ot">&lt;-</span> biomaRt<span class="sc">::</span><span class="fu">useMart</span>(<span class="at">biomart =</span> <span class="st">&quot;ensembl&quot;</span>, </span>
+<span id="cb50-3"><a href="#cb50-3" aria-hidden="true" tabindex="-1"></a>                         <span class="at">dataset =</span> <span class="st">&quot;hsapiens_gene_ensembl&quot;</span>)</span>
+<span id="cb50-4"><a href="#cb50-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-5"><a href="#cb50-5" aria-hidden="true" tabindex="-1"></a>biomart_hsapiens <span class="ot">&lt;-</span> biomaRt<span class="sc">::</span><span class="fu">getBM</span>(<span class="at">attributes =</span> <span class="fu">c</span>(<span class="st">&quot;entrezgene_id&quot;</span>, <span class="st">&quot;hgnc_symbol&quot;</span>),</span>
+<span id="cb50-6"><a href="#cb50-6" aria-hidden="true" tabindex="-1"></a>                                   <span class="at">mart =</span> mart)</span>
+<span id="cb50-7"><a href="#cb50-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb50-8"><a href="#cb50-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr) <span class="co"># For pipe operator &quot;%&gt;%&quot;.</span></span>
+<span id="cb50-9"><a href="#cb50-9" aria-hidden="true" tabindex="-1"></a>biomart_hsapiens <span class="sc">%&gt;%</span></span>
+<span id="cb50-10"><a href="#cb50-10" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(entrezgene_id)) <span class="sc">%&gt;%</span></span>
+<span id="cb50-11"><a href="#cb50-11" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">group_by</span>(entrezgene_id) <span class="sc">%&gt;%</span></span>
+<span id="cb50-12"><a href="#cb50-12" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">summarise</span>(<span class="fu">across</span>(<span class="fu">everything</span>(), dplyr<span class="sc">::</span>first)) <span class="ot">-&gt;</span></span>
+<span id="cb50-13"><a href="#cb50-13" aria-hidden="true" tabindex="-1"></a>  biomart_hsapiens</span></code></pre></div>
 <p>This mapping was compressed and saved for the package using the code:</p>
+<div class="sourceCode" id="cb51"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb51-1"><a href="#cb51-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Not run: Only for building the package.</span></span>
+<span id="cb51-2"><a href="#cb51-2" aria-hidden="true" tabindex="-1"></a>usethis<span class="sc">::</span><span class="fu">use_data</span>(biomart_hsapiens)</span>
+<span id="cb51-3"><a href="#cb51-3" aria-hidden="true" tabindex="-1"></a>tools<span class="sc">::</span><span class="fu">resaveRdaFiles</span>(<span class="fu">file.path</span>(<span class="st">&quot;data&quot;</span>), <span class="at">compress =</span> <span class="st">&quot;auto&quot;</span>)</span>
+<span id="cb51-4"><a href="#cb51-4" aria-hidden="true" tabindex="-1"></a>tools<span class="sc">::</span><span class="fu">checkRdaFiles</span>(<span class="fu">file.path</span>(<span class="st">&quot;data&quot;</span>))</span></code></pre></div>
+</div>
 
-<pre><code class="R"># Not run: Only for building the package.
-usethis::use_data(biomart_hsapiens)
-tools::resaveRdaFiles(file.path(&quot;data&quot;), compress = &quot;auto&quot;)
-tools::checkRdaFiles(file.path(&quot;data&quot;))
-</code></pre>
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
 
 </body>
-
 </html>

@@ -835,6 +835,8 @@ run_mrnet <- function(x, estimator = "spearman", ...) {
 #' Can be used for the `network_inference` argument in \code{\link{dnapath}}.
 #' 
 #' @param x A n by p matrix of gene expression data (n samples and p genes).
+#' @param ranks If TRUE, the gene expression values will be converted to ranks
+#' (across samples) prior to covariance estimation.
 #' @param verbose Argument is passed into \code{\link[corpcor]{pcor.shrink}}.
 #' @param ... Additional arguments are ignored.
 #' @return A p by p matrix of association scores.
@@ -883,15 +885,21 @@ run_mrnet <- function(x, estimator = "spearman", ...) {
 #' # First rename entrezgene IDs into gene symbols.
 #' SeqNet::plot_network(nw_list[[1]])
 #' }
-run_pcor <- function(x, verbose = FALSE, ...) {
+run_pcor <- function(x, ranks = TRUE, verbose = FALSE, ...) {
   p <- ncol(x)
+  n <- nrow(x)
   scores <- matrix(0, nrow = p, ncol = p)
   # Index the genes that have variability in their expression.
   index <- which(apply(x, 2, function(val) !all(abs(val - mean(val)) < 1e-12)))
   # If only 1 or fewer genes have variability, no network can be estimated.
   if(length(index) <= 1) return(scores)
   
-  mat <- corpcor::pcor.shrink(x[, index], verbose = verbose)
+  x_index <- x[, index]
+  if(ranks) {
+    x_index <- apply(x_index, 2, rank)
+  }
+  
+  mat <- corpcor::pcor.shrink(x_index, verbose = verbose)
   mat <- matrix(as.numeric(mat), nrow = nrow(mat), ncol = ncol(mat))
   diag(mat) <- 0
   
@@ -1033,4 +1041,105 @@ run_silencer <- function(x, method = "spearman", verbose = FALSE, ...) {
   colnames(scores) <- colnames(x)
   
   return(scores)
+}
+
+
+#' Wrapper for partial correlations with Empirical Bayes FDR correction
+#' 
+#' Conducts co-expression analysis using full partial correlations; these are
+#' computed using the shrinkage approach for covariance estimation 
+#' \insertCite{schafer05}{dnapath} from the 
+#' `corpcor` package \insertCite{corpcor}{dnapath}.
+#' Can be used for the `network_inference` argument in \code{\link{dnapath}}.
+#' This method will use Empirical Bayes FDR to set some estimates to zero. 
+#' 
+#' @param x A n by p matrix of gene expression data (n samples and p genes).
+#' @param ranks If TRUE, the gene expression values will be converted to ranks
+#' (across samples) prior to covariance estimation.
+#' @param thrsh A positive value (defaults to 1.5). This is used as
+#' the cutoff for the likelihood ratio of the estimate local FDR.
+#' @param verbose Argument is passed into \code{\link[corpcor]{pcor.shrink}}.
+#' @param ... Additional arguments are ignored.
+#' @return A p by p matrix of association scores.
+#' @references 
+#' \insertRef{schafer05}{dnapath}
+#' 
+#' \insertRef{corpcor}{dnapath}
+#' @seealso 
+#' \code{\link{run_aracne}}, 
+#' \code{\link{run_bc3net}}, \code{\link{run_c3net}},
+#' \code{\link{run_clr}}, \code{\link{run_corr}}, 
+#' \code{\link{run_dwlasso}}, \code{\link{run_genie3}}, 
+#' \code{\link{run_glasso}}, \code{\link{run_mrnet}}, and \code{\link{run_silencer}}
+#' @export
+#' @examples 
+#' data(meso)
+#' data(p53_pathways)
+#' 
+#' # To create a short example, we subset on two pathways from the p53 pathway list,
+#' # and will only run 3 permutations for significance testing.
+#' pathway_list <- p53_pathways[c(8, 13)]
+#' n_perm <- 3
+#' 
+#' # Use this method to perform differential network analysis.
+#' results <- dnapath(x = meso$gene_expression,
+#'                    pathway_list = pathway_list,
+#'                    groups = meso$groups,
+#'                    n_perm = n_perm,
+#'                    network_inference = run_pcor)
+#' summary(results)
+#' 
+#' # The group-specific association matrices can be extracted using get_networks().
+#' nw_list <- get_networks(results[[1]]) # Get networks for pathway 1.
+#' 
+#' \donttest{
+#' # nw_list has length 2 and contains the inferred networks for the two groups.
+#' # The gene names are the Entrezgene IDs from the original expression dataset.
+#' # Renaming the genes in the dnapath results to rename those in the networks.
+#' # NOTE: The temporary directory, tempdir(), is used in this example. In practice,
+#' #       this argument can be removed or changed to an existing directory
+#' results <- rename_genes(results, to = "symbol", species = "human",
+#'                         dir_save = tempdir())
+#' nw_list <- get_networks(results[[1]]) # The genes (columns) will have new names.
+#' 
+#' # (Optional) Plot the network using SeqNet package (based on igraph plotting).
+#' # First rename entrezgene IDs into gene symbols.
+#' SeqNet::plot_network(nw_list[[1]])
+#' }
+run_pcor_fdr <- function(x, ranks = TRUE, thrsh = 1.5, verbose = FALSE, ...) {
+  p <- ncol(x)
+  
+  # First, estimate the network using the partial correlation method.
+  scores <- run_pcor(x, ranks, verbose, ...)
+  
+  # Extract the individual partial correlation estimates.
+  vals <- scores[lower.tri(scores)]
+  # Estimate the mean and standard deviation of the null distribution.
+  mu.f0 <- median(vals) # Use median since distribution of scores may be skewed.
+  sigma.f0 <- 1.4826 * median(abs(vals - median(vals))) # Use 1.4826 * MAD.
+    
+  # Emperical Bayes FDR. Save likelihood ratios.
+  numerator <- dnorm(vals, mu.f0, sigma.f0)
+  denominator <- approx(density(vals), xout = vals)$y
+  
+  likelihood <- numerator / denominator
+  
+  # # Note: The estimated null distribution and empirical distribution can
+  # # be plotted using these lines of code:
+  # ordered_vals <- order(vals)
+  # plot(vals[ordered_vals], numerator[ordered_vals], col = "blue", type = "l",
+  #      main = "Empirical Bayes fdr")
+  # lines(vals[ordered_vals], denominator[ordered_vals], 
+  #       col = "orange")
+  # lines(vals[ordered_vals], numerator[ordered_vals] / denominator[ordered_vals], 
+  #       col = "red")
+
+  is_significant <- likelihood > thrsh
+  
+  # Find significant edges.
+  sig_scores <- matrix(0, nrow = p, ncol = p)
+  sig_scores[lower.tri(sig_scores)] <- vals * is_significant
+  sig_scores <- sig_scores + t(sig_scores)
+  
+  return(sig_scores)
 }

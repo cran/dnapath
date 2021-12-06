@@ -4,12 +4,12 @@
 \alias{summarize_genes_for_pathway}
 \title{Summarize differential connectivity of genes in a pathway}
 \usage{
-summarize_genes_for_pathway(x, alpha_gene = NULL, monotonized = FALSE)
+summarize_genes_for_pathway(x, alpha = NULL, monotonized = FALSE)
 }
 \arguments{
 \item{x}{A 'dnapath' object of a single pathway.}
 
-\item{alpha_gene}{Threshold for p-values of gene DC scores, used to
+\item{alpha}{Threshold for p-values of gene DC scores, used to
 subset the x. If NULL (or 1), x for all genes are shown.}
 
 \item{monotonized}{If TRUE, monotonized p-values are used.}

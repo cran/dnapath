@@ -34,7 +34,8 @@ temporary directory to store files during the R session.}
 }
 \value{
 A data frame with two columns: the first contains the original
-gene symbols, and the second contains a corresponding entrezgene ID.
+gene symbols, and the second contains a corresponding entrezgene ID. If a
+gene symbol is not mapped to an entrezgene ID, the entrezgene ID is set to -1.
 }
 \description{
 Uses \code{biomaRt} \insertCite{biomart}{dnapath}

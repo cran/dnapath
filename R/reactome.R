@@ -251,32 +251,34 @@ entrez_to_symbol <- function(x,
   # If the entrezgene IDs are a factor or character object, coerce into numeric.
   if(!is.numeric(x)) {
     if(is.factor(x)) {
-      x <- as.numeric(as.character(x))
+      x <- suppressWarnings(as.numeric(as.character(x)))
     } else {
-      x <- as.numeric(x)
+      x <- suppressWarnings(as.numeric(x))
     }
   }
   
-  gene_info <- get_biomart_mapping(species, symbol_name, dir_save, verbose)
+  gene_info <- get_biomart_mapping(species, symbol_name, dir_save, verbose) %>%
+    dplyr::group_by(entrezgene_id) %>%
+    dplyr::summarise(dplyr::across(dplyr::everything(), dplyr::first)) 
   
-  # get_biomart_mapping() may return NULL if biomaRt is not installed or
-  # if there is no internet access. Return "NA" string for gene symbols.
   if(is.null(gene_info)) {
+    # get_biomart_mapping() may return NULL if biomaRt is not installed and there
+    # is no archived mapping for this species. Return "NA" string for gene symbols.
+    
     df <- data.frame(entrezgene_id = x,
                     symbol = "NA", 
                     stringsAsFactors = FALSE)
     colnames(df)[2] <- symbol_name
-    return(df)
-  }
-  
-  df <- data.frame(entrezgene_id = x)
-  df <- dplyr::left_join(df, gene_info, by = "entrezgene_id")
-  df <- dplyr::distinct(df)
-  
-  # If any symbols were not found, replace NA value(s) with the entrezgene ID.
-  index_na <- which(is.na(df[, 2]))
-  if(length(index_na) > 0) {
-    df[index_na, 2] <- df[index_na, 1]
+  } else {
+    # If a mapping was obtained, then create the final data frame to return.
+    df <- data.frame(entrezgene_id = x)
+    df <- dplyr::left_join(df, gene_info, by = "entrezgene_id")
+    
+    # If any symbols were not found, replace NA value(s) with the entrezgene ID.
+    index_na <- which(is.na(df[, 2]))
+    if(length(index_na) > 0) {
+      df[index_na, 2] <- df[index_na, 1]
+    }
   }
   
   return(df)
@@ -310,7 +312,8 @@ entrez_to_symbol <- function(x,
 #' temporary directory to store files during the R session.
 #' @param verbose Set to FALSE to avoid messages.
 #' @return A data frame with two columns: the first contains the original
-#' gene symbols, and the second contains a corresponding entrezgene ID. 
+#' gene symbols, and the second contains a corresponding entrezgene ID. If a
+#' gene symbol is not mapped to an entrezgene ID, the entrezgene ID is set to -1.
 #' @note
 #' Internet connection is required to connect to biomaRt. If unavailable, the
 #' default biomart and default species contained in the package is used, but
@@ -356,13 +359,18 @@ symbol_to_entrez <- function(x,
     }
   }
   
+  # Use biomaRt to obtain the mapping.
   gene_info <- get_biomart_mapping(species, symbol_name, dir_save, verbose)
+  if(!is.null(gene_info))
+    gene_info <- gene_info %>%
+    dplyr::group_by(dplyr::across(dplyr::all_of(symbol_name))) %>%
+    dplyr::summarise(dplyr::across(dplyr::everything(), dplyr::first)) 
   
   # get_biomart_mapping() may return NULL if biomaRt is not installed or
-  # if there is no internet access. Return -1 for entrezgene IDs.
+  # if there is no internet access. Return -2 for entrezgene IDs.
   if(is.null(gene_info)) {
     df <- data.frame(symbol = x,
-                     entrezgene_id = -1, 
+                     entrezgene_id = -2, 
                      stringsAsFactors = FALSE)
     colnames(df)[1] <- symbol_name
     return(df)
@@ -371,7 +379,6 @@ symbol_to_entrez <- function(x,
   df <- data.frame(symbol = x, stringsAsFactors = FALSE)
   colnames(df) <- symbol_name
   df <- dplyr::left_join(df, gene_info, by = symbol_name)
-  df <- dplyr::distinct(df)
   
   # If any entrezgenes were not found, replace NA value(s) with -1
   index_na <- which(is.na(df[, 2]))
@@ -388,7 +395,8 @@ symbol_to_entrez <- function(x,
 #' @param species The species to obtain a biomart dataset for. This should be
 #' an output from \code{\link{format_species_name}}.
 #' @param symbol_name The type of gene symbol to use. HGNC symbols are used by 
-#' default, unless `species` is "mmusculus", in which case MGI symbols are used.
+#' default (hgnc_symbol), unless `species` is "mmusculus", in which case MGI 
+#' symbols are used (mgi_symbol).
 #' @param dir_save The directory to store annotation reference. Future
 #' calls to this function will use the stored annotations. This speeds up the
 #' operation and allows for reproducibility in the event that the `biomaRt`
@@ -400,8 +408,10 @@ symbol_to_entrez <- function(x,
 #' @keywords internal
 #' @export
 get_biomart_mapping <- function(species, symbol_name, dir_save, verbose) {
-  # If biomaRt package is not installed, return default mapping.
   if(!requireNamespace("biomaRt", quietly = TRUE)) {
+    # If biomaRt package is not installed, return archived mapping or NULL 
+    # if one is not available.
+    
     message("Warning: the bioconductor package `biomaRt` is not installed.\n")
     if(species == "hsapiens") {
       message("Warning: Using the biomaRt data archived in `dnapath`; this ",
@@ -412,11 +422,10 @@ get_biomart_mapping <- function(species, symbol_name, dir_save, verbose) {
               "Please install the `biomaRt` package.\n")
       gene_info <- NULL
     }
-    return(gene_info)
-  }
-  
-  # If no internet access, return default mapping.
-  if(!curl::has_internet()) {
+  } else if(!curl::has_internet()) {
+    # If no internet access, return archived mapping or NULL if one is not 
+    # available.
+    
     message("Warning: Internet connection is not available.\n")
     if(species == "hsapiens") {
       message("Warning: Using the biomaRt data archived in `dnapath`; this ",
@@ -427,34 +436,65 @@ get_biomart_mapping <- function(species, symbol_name, dir_save, verbose) {
               "Please establish internet connection and try again.\n")
       gene_info <- NULL
     }
-    return(gene_info)
-  }
-  
-  
-  load_file <- NULL
-  if(!is.null(dir_save))
-    load_file <- file.path(dir_save, paste0("entrez_to_", species, ".rds"))
-  
-  if(!is.null(dir_save) && file.exists(load_file)) {
-    if(verbose) cat("\t- loading gene info from", load_file, "\n")
-    gene_info <- readRDS(load_file)
   } else {
-    mart <- init_mart(species)
-    gene_info <- biomaRt::getBM(attributes = c("entrezgene_id", symbol_name),
-                                mart = mart)
-    gene_info %>%
-      dplyr::filter(!is.na(entrezgene_id)) %>%
-      dplyr::group_by(entrezgene_id) %>%
-      dplyr::summarise(across(everything(), dplyr::first)) ->
-      gene_info
+    # Access biomart to obtain mapping.
     
-    # Store the annotations for future reference.
+    load_file <- NULL
     if(!is.null(dir_save)) {
-      save_file <- load_file
-      if(verbose)
-        cat("\t- saving gene info to", save_file, "\n")
-      if(!dir.exists(dir_save)) dir.create(dir_save, recursive = TRUE)
-      saveRDS(gene_info, save_file)
+      # If a save directory is provided, get the path to a .rds file for this species.
+      load_file <- file.path(dir_save, paste0("entrez_to_", species, ".rds"))
+    }
+    
+    if(!is.null(dir_save) && file.exists(load_file)) {
+      # If the save directory already contains a .rds file for this species, 
+      # then load that mapping.
+      if(verbose) cat("\t- loading gene info from", load_file, "\n")
+      gene_info <- readRDS(load_file)
+    } else {
+      # If the save directory does not contain a .rds file for this species,
+      # then access biomart to create the mapping.
+      mart <- init_mart(species)
+      if(is.null(mart)) {
+        # Failure may occur here due to internet connection issues. In this case,
+        # give a warning and default to an archived mapping.
+        message("Warning: unable to obtain a valid Mart object. ",
+                "Using archived biomart data for hsapiens.")
+        gene_info <- dnapath::biomart_hsapiens
+      } else {
+        gene_info <- tryCatch(
+          biomaRt::getBM(attributes = c("entrezgene_id", symbol_name), mart = mart),
+          error = function(e) {
+            # Something went wrong; set mart to NULL so results aren't saved later.
+            mart <- NULL
+            if(!curl::has_internet()) {
+              message("Error: Internet connection is not available. The init_mart() ",
+                      "was successful but unable to use getBM(). The archived ", 
+                      "biomart data for hspaiens will be used.")
+              return(dnapath::biomart_hsapiens)
+            } else {
+              message("Error: unable to use getBM(). Using the archived data ",
+                      "for hsapiens.")
+              return(dnapath::biomart_hsapiens)
+            }
+          }
+        )
+      }
+      
+      # Process the mapping:
+      # Remove any rows containing NA values for the entrezgene ID.
+      gene_info %>%
+        dplyr::filter(!is.na(entrezgene_id)) ->
+        gene_info
+      
+      # If biomart was accessed, store the mapping for future reference.
+      if(!is.null(mart) && !is.null(dir_save)) {
+        save_file <- load_file
+        if(verbose)
+          cat("\t- saving gene info to", save_file, "\n")
+        if(!dir.exists(dir_save)) 
+          dir.create(dir_save, recursive = TRUE)
+        saveRDS(gene_info, save_file)
+      }
     }
   }
   

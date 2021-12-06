@@ -18,7 +18,7 @@ user-defined mapping, or the mapping obtained using
 
 \item{to}{(Optional) Setting \code{to = "symbol"} will rename entrezgene IDs to
 gene symbols; this will automatically call the \code{entrez_to_symbol()} function
-to obtain the mapping for \code{gene_mat}. The \code{species} arugment must also be
+to obtain the mapping for \code{gene_mat}. The \code{species} argument must also be
 specified when \code{to} is used.}
 
 \item{species}{(Optional) Must be specified when setting \code{to = "symbol"}. This

@@ -28,7 +28,9 @@ group.}
 \item{pathway_list}{A single vector or list of vectors containing gene names
 to indicate pathway membership. The vectors are used to subset the columns
 of the matrices in \code{x}. A pathway list can be obtained using
-\code{\link{get_reactome_pathways}}.}
+\code{\link{get_reactome_pathways}}. If NULL, then the entire expression
+dataset is analyzed as a single network (this approach is not recommended
+unless there are only a small number of genes).}
 
 \item{groups}{If \code{x} is a single matrix or data frame, \code{groups} must
 be specified to label each row. \code{groups} is a vector of length equal to the

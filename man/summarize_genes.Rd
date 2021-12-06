@@ -4,12 +4,12 @@
 \alias{summarize_genes}
 \title{Summarize the differential connectivity of genes over all pathways.}
 \usage{
-summarize_genes(x, alpha_gene = NULL, monotonized = FALSE)
+summarize_genes(x, alpha = NULL, monotonized = FALSE)
 }
 \arguments{
 \item{x}{A 'dnapath_list' object from \code{\link{dnapath}}.}
 
-\item{alpha_gene}{Threshold for p-values of gene DC scores. Used to determine
+\item{alpha}{Threshold for p-values of gene DC scores. Used to determine
 the number of pathways that each gene is differentially connected in. If NULL,
 defaults to 0.05 or the minimum possible threshold (based on the
 number of permutatiosn that were run).}

@@ -3,7 +3,7 @@ NULL
 
 #' @importFrom tibble tibble
 #' @importFrom Rdpack reprompt
-#' @importFrom stats cov2cor cor
+#' @importFrom stats approx cov2cor cor density dnorm median
 #' @importFrom utils combn head tail
 #' @importFrom methods is
 #' @importFrom graphics par plot

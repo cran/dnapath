@@ -17,47 +17,67 @@ results <- dnapath(meso$gene_expression,
 results
 
 ## -----------------------------------------------------------------------------
-plot(results, alpha = 0.05)
+plot(results, alpha = 0.05, only_dc = TRUE)
 
 ## -----------------------------------------------------------------------------
 data(meso) # Load the gene expression data
 data(p53_pathways)
 
-# Run the differntial network analysis.
+# Run the differential network analysis.
 results <- dnapath(x = meso$gene_expression,
                    pathway_list = p53_pathways,
-                   groups = meso$groups)
+                   groups = meso$groups,
+                   seed = 0)
 
 results
 
 ## -----------------------------------------------------------------------------
-results <- filter_pathways(results, alpha_pathway = 0.2)
+results <- filter_pathways(results, alpha_pathway = 0.1)
+results
+
+## -----------------------------------------------------------------------------
+results <- sort(results, decreasing = TRUE, by = "n_dc")
 results
 
 ## -----------------------------------------------------------------------------
 # The plot layout is stochastic. Setting the RNG seed allows for reproducible plots.
-set.seed(123)
-plot(results[[1]])
+set.seed(0)
+plot(results[[1]], alpha = 0.05, only_dc = TRUE)
 
 ## -----------------------------------------------------------------------------
 results <- rename_genes(results, to = "symbol", species = "human",
                         dir_save = tempdir())
-results[[1]]
+results[[1]] # Print the results for the first pathway.
 
 ## -----------------------------------------------------------------------------
-set.seed(123) # Reset seed to use same layout as previous plot.
-plot(results[[1]])
+set.seed(0) # Reset seed to use same layout as previous plot.
+plot(results[[1]], alpha = 0.05, only_dc = TRUE)
 
 ## -----------------------------------------------------------------------------
 # Summary table of the edges in pathway 1.
-# Note: could instead use the summarize_edges(results[[1]]) function call.
-summary(results[[1]], by_gene = FALSE) # Set by_gene to FALSE to obtain edges.
+summarize_edges(results[[1]], alpha = 0.05)
 
 ## -----------------------------------------------------------------------------
-summary(results[[1]], by_gene = FALSE, alpha = 0.05)
+library(dplyr)
+tab <- summarize_edges(results[[1]])
+tab <- dplyr::arrange(tab, p_value, decreasing = FALSE)
+tab <- dplyr::filter(tab, pmax(abs(nw1), abs(nw2)) > 0.2)
+tab
 
 ## -----------------------------------------------------------------------------
-plot_pair(results, "FAS", "TP73")
+plot_pair(results, "BANP", "TP53")
+
+## -----------------------------------------------------------------------------
+plot_pair(results, "BANP", "TP53", method = "lm")
+
+## -----------------------------------------------------------------------------
+set.seed(0) # Reset seed to use same layout as previous plot.
+plot(results[[1]], alpha = 0.05, only_dc = TRUE, require_dc_genes = TRUE)
+summarize_edges(results[[1]], alpha = 0.05, require_dc_genes = TRUE)
+
+## -----------------------------------------------------------------------------
+set.seed(0) # Reset seed to use same layout as previous plot.
+plot(results[[1]], alpha = 0.05)
 
 ## ----echo=FALSE---------------------------------------------------------------
 options(scipen = reset_options_scipen, digits = reset_options_digits)
