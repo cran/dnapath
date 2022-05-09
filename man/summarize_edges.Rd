@@ -4,14 +4,14 @@
 \alias{summarize_edges}
 \title{Summarize differential connections for a pathway}
 \usage{
-summarize_edges(x, alpha = NULL, monotonized = FALSE, require_dc_genes = FALSE)
+summarize_edges(x, alpha = 0.1, monotonized = FALSE, require_dc_genes = FALSE)
 }
 \arguments{
 \item{x}{A 'dnapath' object from \code{\link{dnapath}}.}
 
-\item{alpha}{Threshold for p-values of edge DC scores. If NULL,
-defaults to 0.05 or the minimum possible threshold (based on the
-number of permutatiosn that were run).}
+\item{alpha}{Threshold for p-values of edge DC scores.
+Defaults to 0.1 or the minimum possible threshold for the number
+of permutations performed, whichever is greater.}
 
 \item{monotonized}{If TRUE, monotonized p-values are used.}
 
@@ -32,7 +32,7 @@ data(meso)
 data(p53_pathways)
 set.seed(0)
 results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-                   groups = meso$groups, n_perm = 10)
+                   group_labels = meso$groups, n_perm = 10)
 summarize_edges(results[[1]])
 }
 \seealso{

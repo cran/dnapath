@@ -34,7 +34,7 @@ data(meso)
 data(p53_pathways)
 set.seed(0)
 results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-                   groups = meso$groups, n_perm = 10)
+                   group_labels = meso$groups, n_perm = 10)
 # Filter out pathways that have p-values above 0.2.
 results_sig <- filter_pathways(results, 0.2) 
 sort(results_sig, by = "dc_score") # Sort by the pathway DC score.

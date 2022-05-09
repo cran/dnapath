@@ -8,6 +8,7 @@ NULL
 #' @importFrom methods is
 #' @importFrom graphics par plot
 #' @importFrom grDevices rgb
+#' @importFrom gtools permutations
 #' @importFrom curl has_internet
 #' @importFrom igraph V E
 #' @importFrom corpcor pcor.shrink

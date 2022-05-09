@@ -100,7 +100,7 @@ test_that("dnapath method works on data.frame input", {
   expr_pair[groups == "A", c(1, 5, 9)] <- 0
   expr_pair[groups == "B", c(9, 10, 23, 90:p)] <- 0
   
-  network_inference <- function(x, ...) suppressWarnings(run_corr(x, ...))
+  network_inference <- function(x, weights, ...) suppressWarnings(run_corr(x, weights, ...))
   n_perm = 10
   lp = 2
   
@@ -128,7 +128,7 @@ test_that("dnapath method works on data.frame input", {
                        as.character(c(1, 5, 8, 13, 19)), 
                        as.character(c(2, 3, 4, 6:20, 10001)))
   results <- dnapath(expr_pair, pathway_list, groups,
-                 network_inference, n_perm, lp)
+                     network_inference, n_perm, lp)
   expect_true(all(unname(dnapath:::get_mean_expr_mat(results[[1]])[1, c(1, 5)]) == c(0, 0)))
   expect_true(unname(dnapath:::get_mean_expr_mat(results[[1]])[2, c(5)]) == 0)
   expect_is(results, "dnapath_list")
@@ -153,6 +153,92 @@ test_that("dnapath method works on data.frame input", {
                        "c" = c(2, 3, 4, 6:20))
   results <- dnapath(expr_pair, pathway_list, groups,
                  network_inference, n_perm, lp)
+  expect_is(results, "dnapath_list")
+  expect_equal(names(results), names(pathway_list))
+  
+  expect_is(summary(results), "tbl")
+  expect_is(summarize_genes(results), "tbl")
+  expect_is(summarize_pathways(results), "tbl")
+  # expect_invisible(plot(results[[1]]))
+  
+  # Check that gene names are unchanged after subsetting.
+  genes_before_subset <- results$param$gene_names[results$pathway[[3]]$genes]
+  results <- results[c(1, 3)]
+  genes_after_subset <- results$param$gene_names[results$pathway[[2]]$genes]
+  expect_equal(genes_before_subset, genes_after_subset)
+  # Pathway 2 is omitted from the results because it contains only 1 gene.
+  expect_equal(sort(results$param$gene_names[results$pathway[[2]]$genes]), 
+               sort(unique(as.character(pathway_list[[3]]))))
+})
+
+
+test_that("dnapath method works on data.frame input and probabilistic group labels", {
+  n <- 30
+  group_prob <- round(rbeta(n, 1, 1), 3)
+  group_prob <- cbind(group_prob, 1 - group_prob)
+  colnames(group_prob) <- c("A", "B")
+  p <- 100
+  expr_pair <- matrix(rnorm(p * n, 10, 1), ncol = p)
+  colnames(expr_pair) <- 1:p
+  
+  # Delete some of the genes in each group
+  expr_pair[group_prob[, 1] > 0.5, c(1, 5, 9)] <- 0
+  expr_pair[group_prob[, 1] <= 0.5, c(9, 10, 23, 90:p)] <- 0
+  
+  network_inference <- function(x, weights, ...) suppressWarnings(run_corr(x, weights, ...))
+  n_perm = 10
+  lp = 2
+  
+  pathway_list <- as.character(1:20)
+  # Check that seed can be set without error and returns equivalent results.
+  results1 <- dnapath(expr_pair, pathway_list, group_prob,
+                      network_inference, n_perm, lp, seed = 1)
+  results2 <- dnapath(expr_pair, pathway_list, group_prob,
+                      network_inference, n_perm, lp, seed = 1)
+  expect_equal(unclass(results1), unclass(results2))
+  
+  # Check that methods work on 'dnapath' object
+  results <- dnapath(expr_pair, pathway_list, group_prob,
+                     network_inference, n_perm, lp)
+  expect_is(results, "dnapath")
+  expect_is(summary(results), "tbl")
+  expect_is(summarize_genes(results), "tbl")
+  expect_is(summarize_pathways(results), "tbl")
+  # expect_invisible(plot(results))
+  
+  # Check that methods work on 'dnapath_list' object.
+  # Create pathway list.
+  pathway_list <- list(as.character(5:9), 
+                       as.character(20),
+                       as.character(c(1, 5, 8, 13, 19)), 
+                       as.character(c(2, 3, 4, 6:20, 10001)))
+  results <- dnapath(expr_pair, pathway_list, group_prob,
+                     network_inference, n_perm, lp)
+  expect_true(unname(dnapath:::get_mean_expr_mat(results[[1]])[1, 1]) < 5)
+  expect_true(unname(dnapath:::get_mean_expr_mat(results[[1]])[1, 5]) == 0)
+  expect_true(unname(dnapath:::get_mean_expr_mat(results[[1]])[2, 5]) == 0)
+  expect_is(results, "dnapath_list")
+  expect_is(summary(results), "tbl")
+  expect_is(summarize_genes(results), "tbl")
+  expect_is(summarize_pathways(results), "tbl")
+  
+  # Check that gene names are unchanged after subsetting.
+  genes_before_subset <- results$param$gene_names[results$pathway[[1]]$genes]
+  results <- results[c(1, 3)]
+  genes_after_subset <- results$param$gene_names[results$pathway[[1]]$genes]
+  expect_equal(genes_before_subset, genes_after_subset)
+  expect_equal(genes_before_subset, c("5", "6", "7", "8", "9"))
+  # Pathway 2 is omitted from the results because it contains only 1 gene.
+  expect_equal(sort(get_genes(results[[2]])), 
+               sort(unique(as.character(pathway_list[[4]][-19]))))
+  
+  # Check that methods work on 'dnapath_list' object
+  # Now use a named pathway_list.
+  pathway_list <- list("a" = 16:49, 
+                       "b" = c(1, 5, 5, 5, 5, 5, 8, 13, 19), 
+                       "c" = c(2, 3, 4, 6:20))
+  results <- dnapath(expr_pair, pathway_list, group_prob,
+                     network_inference, n_perm, lp)
   expect_is(results, "dnapath_list")
   expect_equal(names(results), names(pathway_list))
   
@@ -237,7 +323,7 @@ test_that("dnapath method gives warnings and errors.", {
                      matrix(rnorm(p * n[2], 10), nrow = n[2], ncol = p))
   colnames(expr_pair) <- 1:p
   pathway_list <- as.character(5:15)
-  groups <- rep(1:2, n)
+  groups <- rep(0:1, n)
   expect_warning(dnapath(expr_pair, pathway_list, groups,
                      network_inference, n_perm = 100, lp))
   expect_error(dnapath(expr_pair, pathway_list, groups = NULL,

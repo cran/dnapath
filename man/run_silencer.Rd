@@ -4,10 +4,14 @@
 \alias{run_silencer}
 \title{Wrapper for silencer method}
 \usage{
-run_silencer(x, method = "spearman", verbose = FALSE, ...)
+run_silencer(x, weights = NULL, method = "spearman", verbose = FALSE, ...)
 }
 \arguments{
 \item{x}{A n by p matrix of gene expression data (n samples and p genes).}
+
+\item{weights}{An optional vector of weights. This is used by \code{dnapath()} to
+apply the probabilistic group labels to each observation when estimating the
+group-specific network.}
 
 \item{method}{Argument is passed into \code{\link[stats]{cor}}.}
 
@@ -37,7 +41,7 @@ n_perm <- 1
 # For example, the 'method' parameter can be specified as shown here.
 results <- dnapath(x = meso$gene_expression,
                    pathway_list = pathway_list,
-                   groups = meso$groups,
+                   group_labels = meso$groups,
                    n_perm = n_perm,
                    network_inference = run_silencer,
                    method = "spearman")

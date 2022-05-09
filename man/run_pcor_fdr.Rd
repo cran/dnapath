@@ -4,10 +4,21 @@
 \alias{run_pcor_fdr}
 \title{Wrapper for partial correlations with Empirical Bayes FDR correction}
 \usage{
-run_pcor_fdr(x, ranks = TRUE, thrsh = 1.5, verbose = FALSE, ...)
+run_pcor_fdr(
+  x,
+  weights = NULL,
+  ranks = TRUE,
+  thrsh = 1.5,
+  verbose = FALSE,
+  ...
+)
 }
 \arguments{
 \item{x}{A n by p matrix of gene expression data (n samples and p genes).}
+
+\item{weights}{An optional vector of weights. This is used by \code{dnapath()} to
+apply the probabilistic group labels to each observation when estimating the
+group-specific network.}
 
 \item{ranks}{If TRUE, the gene expression values will be converted to ranks
 (across samples) prior to covariance estimation.}
@@ -42,7 +53,7 @@ n_perm <- 3
 # Use this method to perform differential network analysis.
 results <- dnapath(x = meso$gene_expression,
                    pathway_list = pathway_list,
-                   groups = meso$groups,
+                   group_labels = meso$groups,
                    n_perm = n_perm,
                    network_inference = run_pcor)
 summary(results)

@@ -12,7 +12,7 @@
 
 <meta name="author" content="Tyler Grimes" />
 
-<meta name="date" content="2021-12-03" />
+<meta name="date" content="2022-05-08" />
 
 <title>Package datasets</title>
 
@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', function(e) {
   div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
   ul.task-list{list-style: none;}
     </style>
+
 
 
 <style type="text/css">
@@ -333,7 +334,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Package datasets</h1>
 <h4 class="author">Tyler Grimes</h4>
-<h4 class="date">2021-12-03</h4>
+<h4 class="date">2022-05-08</h4>
 
 
 <div id="TOC">
@@ -598,7 +599,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>gene_symbols <span class="ot">&lt;-</span> <span class="fu">colnames</span>(rnaseq) <span class="co"># Extract the gene symbols to relabel.</span></span>
 <span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>gene_mat <span class="ot">&lt;-</span> <span class="fu">symbol_to_entrez</span>(gene_symbols, <span class="st">&quot;human&quot;</span>,</span>
 <span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>                             <span class="at">dir_save =</span> <span class="fu">tempdir</span>()) <span class="co"># Obtain mapping.</span></span></code></pre></div>
-<pre><code>##  - loading gene info from /var/folders/vb/115zgf4x28vf40dccy9mj5hw0000gn/T//RtmpKgzacH/entrez_to_hsapiens.rds</code></pre>
+<pre><code>##  - loading gene info from /var/folders/vb/115zgf4x28vf40dccy9mj5hw0000gn/T//RtmpGAJBIA/entrez_to_hsapiens.rds</code></pre>
 <div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>gene_mat[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, ]</span></code></pre></div>
 <pre><code>##   hgnc_symbol entrezgene_id
 ## 1        A1BG             1
@@ -627,13 +628,13 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>index_genes <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="fu">colnames</span>(rnaseq) <span class="sc">%in%</span> <span class="fu">get_genes</span>(p53_pathways))</span>
 <span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>rnaseq <span class="ot">&lt;-</span> rnaseq[, index_genes]</span>
 <span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(rnaseq) <span class="co"># 32 samples with 150 genes.</span></span></code></pre></div>
-<pre><code>## [1]  32 149</code></pre>
+<pre><code>## [1]  32 143</code></pre>
 <p>For completeness, we will show how to convert the entrezgene IDs in the pathway list into gene symbols.</p>
 <div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert entrezgene IDs -&gt; gene symbols</span></span>
 <span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>gene_entrez <span class="ot">&lt;-</span> <span class="fu">get_genes</span>(p53_pathways) <span class="co"># Extract genes from pathway list.</span></span>
 <span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>gene_mat <span class="ot">&lt;-</span> <span class="fu">entrez_to_symbol</span>(gene_entrez, <span class="st">&quot;human&quot;</span>, </span>
 <span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>                             <span class="at">dir_save =</span> <span class="fu">tempdir</span>()) <span class="co"># Obtain mapping.</span></span></code></pre></div>
-<pre><code>##  - loading gene info from /var/folders/vb/115zgf4x28vf40dccy9mj5hw0000gn/T//RtmpKgzacH/entrez_to_hsapiens.rds</code></pre>
+<pre><code>##  - loading gene info from /var/folders/vb/115zgf4x28vf40dccy9mj5hw0000gn/T//RtmpGAJBIA/entrez_to_hsapiens.rds</code></pre>
 <div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>gene_mat[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, ]</span></code></pre></div>
 <pre><code>##   entrezgene_id hgnc_symbol
 ## 1         10000        AKT3
@@ -647,8 +648,8 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <pre><code>## $`Regulation of TP53 Degradation (See also: Regulation of TP53 Expression and Degradation)`
 ##  [1] &quot;AKT3&quot;    &quot;CDK2&quot;    &quot;CDKN2A&quot;  &quot;CHEK2&quot;   &quot;RFFL&quot;    &quot;DAXX&quot;    &quot;AKT1&quot;   
 ##  [8] &quot;AKT2&quot;    &quot;MTOR&quot;    &quot;RICTOR&quot;  &quot;MDM2&quot;    &quot;MDM4&quot;    &quot;ATM&quot;     &quot;PHF20&quot;  
-## [15] &quot;PDPK1&quot;   &quot;PPP2CA&quot;  &quot;PPP2CB&quot;  &quot;PPP2R1A&quot; &quot;PPP2R1B&quot; &quot;PPP2R5C&quot; &quot;PRR5&quot;   
-## [22] &quot;RPS27A&quot;  &quot;MLST8&quot;   &quot;SGK1&quot;    &quot;TP53&quot;    &quot;UBA52&quot;   &quot;UBB&quot;     &quot;UBC&quot;    
+## [15] &quot;PDPK1&quot;   &quot;PPP2CA&quot;  &quot;5516&quot;    &quot;PPP2R1A&quot; &quot;PPP2R1B&quot; &quot;PPP2R5C&quot; &quot;PRR5&quot;   
+## [22] &quot;RPS27A&quot;  &quot;MLST8&quot;   &quot;SGK1&quot;    &quot;TP53&quot;    &quot;UBA52&quot;   &quot;UBB&quot;     &quot;7316&quot;   
 ## [29] &quot;USP7&quot;    &quot;MAPKAP1&quot; &quot;RNF34&quot;   &quot;CCNA2&quot;   &quot;CCNA1&quot;   &quot;CCNG1&quot;   &quot;USP2&quot;   
 ## [36] &quot;CDK1&quot;    &quot;PRDM1&quot;  
 ## 

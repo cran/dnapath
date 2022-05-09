@@ -30,7 +30,7 @@
 #' data(p53_pathways)
 #' set.seed(0)
 #' results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-#'                    groups = meso$groups, n_perm = 10)
+#'                    group_labels = meso$groups, n_perm = 10)
 #' # Plot of the differential network for pathway 1.
 #' plot(results[[1]]) 
 #' # Plot of the differential network for pathway 1; remove any edges from
@@ -209,7 +209,7 @@ plot.dnapath <- function(x, alpha = NULL, monotonized = FALSE,
 #' data(p53_pathways)
 #' set.seed(0)
 #' results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-#'                    groups = meso$groups, n_perm = 10)
+#'                    group_labels = meso$groups, n_perm = 10)
 #' # Plot of the marginal association between the first two genes.
 #' genes <- get_genes(results)[1:2]
 #' g <- plot_pair(results, genes[1], genes[2])
@@ -224,7 +224,7 @@ plot.dnapath <- function(x, alpha = NULL, monotonized = FALSE,
 plot_pair <- function(x, gene_A, gene_B, method = "loess", 
                       alpha = 0.5, se_alpha = 0.1, 
                       use_facet = FALSE, scales = "fixed") {
-  if (class(x) != "dnapath" && class(x) != "dnapath_list") {
+  if(!is(x, "dnapath") && !is(x, "dnapath_list")) {
     stop('x must be a "dnapath" or "dnapath_list" object.')
   }
   
@@ -275,7 +275,7 @@ plot_pair <- function(x, gene_A, gene_B, method = "loess",
 #' data(p53_pathways)
 #' set.seed(0)
 #' results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-#'                    groups = meso$groups, n_perm = 10)
+#'                    group_labels = meso$groups, n_perm = 10)
 #' # Extract the two estimated association networks for the first pathway
 #' nw <- get_networks(results[[1]])
 #' # Plot the networks using the SeqNet::plot_network function.

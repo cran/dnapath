@@ -28,6 +28,6 @@ data(meso)
 data(p53_pathways)
 set.seed(0)
 results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways[[1]],
-                   groups = meso$groups, n_perm = 10)
+                   group_labels = meso$groups, n_perm = 10)
 results[1]
 }

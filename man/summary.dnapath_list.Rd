@@ -7,8 +7,8 @@
 \method{summary}{dnapath_list}(
   object,
   by_gene = FALSE,
-  alpha_pathway = NULL,
-  alpha_gene = NULL,
+  alpha_pathway = 1,
+  alpha_gene = 0.1,
   monotonized = FALSE,
   ...
 )
@@ -23,9 +23,9 @@ instead of by pathways.}
 to subset the results. If NULL (or 1), results for all pathways are shown.}
 
 \item{alpha_gene}{Threshold for p-values of gene DC scores. Used to determine
-the number of genes that are differentially connected within each pathway. If NULL,
-defaults to 0.05 or the minimum possible threshold (based on the
-number of permutatiosn that were run).}
+the number of genes that are differentially connected within each pathway.
+Defaults to 0.1 or the minimum possible threshold for the number
+of permutations performed, whichever is greater.}
 
 \item{monotonized}{If TRUE, monotonized p-values are used.}
 
@@ -42,7 +42,7 @@ data(meso)
 data(p53_pathways)
 set.seed(0)
 results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-                   groups = meso$groups, n_perm = 10)
+                   group_labels = meso$groups, n_perm = 10)
 summary(results) # Summary across all pathways in the analysis.
 }
 \seealso{

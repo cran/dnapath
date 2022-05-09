@@ -4,12 +4,16 @@
 \alias{run_mrnet}
 \title{Wrapper for MRNET method}
 \usage{
-run_mrnet(x, estimator = "spearman", ...)
+run_mrnet(x, estimator = "spearman", weights = NULL, ...)
 }
 \arguments{
 \item{x}{A n by p matrix of gene expression data (n samples and p genes).}
 
 \item{estimator}{Argument is passed into \code{\link[minet]{build.mim}}.}
+
+\item{weights}{An optional vector of weights. This is used by \code{dnapath()} to
+apply the probabilistic group labels to each observation when estimating the
+group-specific network.}
 
 \item{...}{Additional arguments are ignored.}
 }
@@ -35,7 +39,7 @@ n_perm <- 3
 # For example, the 'estimator' parameter can be specified as shown here.
 results <- dnapath(x = meso$gene_expression,
                    pathway_list = pathway_list,
-                   groups = meso$groups,
+                   group_labels = meso$groups,
                    n_perm = n_perm,
                    network_inference = run_mrnet,
                    estimator = "spearman")

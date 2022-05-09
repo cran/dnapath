@@ -26,7 +26,7 @@ data(meso)
 data(p53_pathways)
 set.seed(0)
 results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-                   groups = meso$groups, n_perm = 10)
+                   group_labels = meso$groups, n_perm = 10)
 # Extract the two estimated association networks for the first pathway
 nw <- get_networks(results[[1]])
 # Plot the networks using the SeqNet::plot_network function.

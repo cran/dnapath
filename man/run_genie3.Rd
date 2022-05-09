@@ -4,12 +4,16 @@
 \alias{run_genie3}
 \title{Wrapper for GENIE3 method}
 \usage{
-run_genie3(x, nTrees = 200, ...)
+run_genie3(x, nTrees = 200, weights = NULL, ...)
 }
 \arguments{
 \item{x}{A n by p matrix of gene expression data (n samples and p genes).}
 
 \item{nTrees}{Argument is passed into \code{\link[GENIE3]{GENIE3}}.}
+
+\item{weights}{An optional vector of weights. This is used by \code{dnapath()} to
+apply the probabilistic group labels to each observation when estimating the
+group-specific network.}
 
 \item{...}{Additional arguments are ignored.}
 }
@@ -36,7 +40,7 @@ n_perm <- 5
 # For example, the 'nTrees' parameter can be specified as shown here.
 results <- dnapath(x = meso$gene_expression,
                    pathway_list = pathway_list,
-                   groups = meso$groups,
+                   group_labels = meso$groups,
                    n_perm = n_perm,
                    network_inference = run_genie3,
                    nTrees = 100)

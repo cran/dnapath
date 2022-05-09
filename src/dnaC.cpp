@@ -40,7 +40,7 @@ arma::vec d_edgesC(arma::mat nw1, arma::mat nw2, double lp) {
 double d_pathwayC(arma::mat nw1, arma::mat nw2, double lp) {
   int p = nw1.n_cols;
   int N = p * (p - 1) / 2;
-  double diff = accu(d_edgesC(nw1, nw2, lp)) / (double) N;
+  double diff = accu(d_edgesC(nw1, nw2, lp)) / pow((double) N, 1 / 2);
   
   if(lp > 1) {
     diff = pow(diff, 1 / lp);
@@ -73,7 +73,7 @@ arma::vec d_genesC(arma::mat nw1, arma::mat nw2, double lp) {
       }
     }
     
-    diff[i] = diff[i] / (p - 1);
+    diff[i] = diff[i] / pow((double) (p - 1), 1 / 2);
     
     if(lp < 1) {
       diff[i] = pow(diff[i], 1 / lp);

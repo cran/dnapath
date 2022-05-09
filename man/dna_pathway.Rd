@@ -7,11 +7,10 @@
 dna_pathway(
   x,
   pathway,
-  groups = NULL,
-  network_inference = run_pcor,
-  n_perm = 100,
+  group_prob,
+  network_inference,
+  permutations,
   lp = 2,
-  seed = NULL,
   verbose = FALSE,
   ...
 )
@@ -22,14 +21,14 @@ processed by \code{\link{dnapath}}}
 
 \item{pathway}{A single vector containing gene names.}
 
-\item{groups}{A vector of length equal to the
-number of rows in \code{x} containing two unique elements
-(the two group names).}
+\item{group_prob}{A matrix with number of rows equal to the
+number of rows in \code{x} and two columns, each containing the probability that
+a given observation belongs to each group.}
 
 \item{network_inference}{A function used to infer the pathway network.}
 
-\item{n_perm}{The number of random permutations to perform during
-permutation testing. If \code{n_perm == 1}, the permutation tests are not performed.}
+\item{permutations}{A matrix containing the permutations to perform during
+permutation testing. If \code{NULL}, the permutation tests are not performed.}
 
 \item{lp}{The lp value used to compute differential connectivity
 scores. (Note: If a vector is provided, then the results are returned as
@@ -37,10 +36,6 @@ a list of \code{dnapath_list} objects, one result for each value of \code{lp}. T
 option is available so that network inference methods only need to be run
 once for each pathway when multple values of \code{lp} are being considered. This
 may be useful when conducting simulation studies).}
-
-\item{seed}{(Optional) Used to set.seed prior to permutation test for
-each pathway. This allows results for individual pathways to be easily
-reproduced.}
 
 \item{verbose}{Set to TRUE to turn on messages.}
 

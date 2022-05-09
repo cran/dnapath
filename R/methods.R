@@ -5,6 +5,9 @@
 #' Can be used for the `network_inference` argument in \code{\link{dnapath}}.
 #' 
 #' @param x A n by p matrix of gene expression data (n samples and p genes).
+#' @param weights An optional vector of weights. This is used by `dnapath()` to
+#' apply the probabilistic group labels to each observation when estimating the
+#' group-specific network.
 #' @param estimator Argument is passed into \code{\link[minet]{build.mim}}.
 #' @param disc Argument is passed into \code{\link[minet]{build.mim}}.
 #' @param nbins Argument is passed into \code{\link[minet]{build.mim}}.
@@ -36,7 +39,7 @@
 #' # For example, the 'estimator' parameter can be specified as shown here.
 #' results <- dnapath(x = meso$gene_expression,
 #'                    pathway_list = pathway_list,
-#'                    groups = meso$groups,
+#'                    group_labels = meso$groups,
 #'                    n_perm = n_perm,
 #'                    network_inference = run_aracne,
 #'                    estimator = "spearman")
@@ -59,19 +62,35 @@
 #' # First rename entrezgene IDs into gene symbols.
 #' SeqNet::plot_network(nw_list[[1]])
 #' }
-run_aracne <- function(x, estimator = "spearman", disc = "none", nbins = NULL, 
-                       eps = 0, ...) {
+run_aracne <- function(x, weights = NULL, estimator = "spearman", disc = "none", 
+                       nbins = NULL, eps = 0, ...) {
   if(!requireNamespace("minet", quietly = TRUE)) {
-    message("Warning: The `minet` package must be installed to use run_aracne(). Using ",
-            "run_corr() instead.")
-    return(run_corr(x, ...))
+    message("Warning: The `minet` package must be installed to use run_aracne(). ",
+            "Using run_corr() instead.")
+    return(run_corr(x, weights = weights, ...))
   } else {
     p <- ncol(x)
     scores <- matrix(0, nrow = p, ncol = p)
-    # Index the genes that have variability in their expression.
-    index <- which(apply(x, 2, function(val) !all(abs(val - mean(val)) < 1e-12)))
+    # Index the genes that have variability in their expression. (Using the max
+    # and min as done here is faster than computing var().)
+    index <- which(apply(x, 2, function(val) abs(max(val) - min(val)) > 1e-8))
     # If only 1 or fewer genes have variability, no network can be estimated.
-    if(length(index) <= 1) return(scores)
+    if(length(index) <= 1) 
+      return(scores)
+    
+    index_rows <- 1:nrow(x)
+    if(is.null(weights)) {
+      # Don't make any changes to x.
+    } else if(all(weights == 1 | weights == 0)) {
+      # Subset rows onto those with weight of 1.
+      index_rows <- (weights == 1)
+    } else {
+      # Subset rows onto those with weight above 0.5.
+      # TODO: this scenario will be updated if aracne allows for weights.
+      index_rows <- (weights >= 0.5)
+    }
+    x <- x[index_rows, ]
+    weights <- weights[index_rows]
     
     mim <- minet::build.mim(x[, index], estimator = estimator, disc = disc, nbins = nbins)
     scores[index, index] <- minet::aracne(mim, eps = eps)
@@ -90,6 +109,9 @@ run_aracne <- function(x, estimator = "spearman", disc = "none", nbins = NULL,
 #' Can be used for the `network_inference` argument in \code{\link{dnapath}}.
 #' 
 #' @param x A n by p matrix of gene expression data (n samples and p genes).
+#' @param weights An optional vector of weights. This is used by `dnapath()` to
+#' apply the probabilistic group labels to each observation when estimating the
+#' group-specific network.
 #' @param boot Argument is passed into \code{\link[bc3net]{bc3net}}.
 #' @param estimator Argument is passed into \code{\link[bc3net]{bc3net}}.
 #' @param disc Argument is passed into \code{\link[bc3net]{bc3net}}.
@@ -126,7 +148,7 @@ run_aracne <- function(x, estimator = "spearman", disc = "none", nbins = NULL,
 #' # For example, the 'estimator' and 'boot' parameter can be specified as shown here.
 #' results <- dnapath(x = meso$gene_expression,
 #'                    pathway_list = pathway_list,
-#'                    groups = meso$groups,
+#'                    group_labels = meso$groups,
 #'                    n_perm = n_perm,
 #'                    network_inference = run_bc3net,
 #'                    boot = 10,
@@ -152,20 +174,37 @@ run_aracne <- function(x, estimator = "spearman", disc = "none", nbins = NULL,
 #' # First rename entrezgene IDs into gene symbols.
 #' SeqNet::plot_network(nw_list[[1]])
 #' }
-run_bc3net <- function(x, boot = 100, estimator = "spearman", disc = "equalwidth", 
+run_bc3net <- function(x, weights = NULL, boot = 100, estimator = "spearman", 
+                       disc = "equalwidth", 
                        mtc1 = TRUE, adj1 = "bonferroni", alpha1 = 0.05, 
                        mtc2 = TRUE, adj2 = "bonferroni", alpha2 = 0.05, ...) {
   if(!requireNamespace("bc3net", quietly = TRUE)) {
     message("Warning: The `bc3net` package must be installed to use run_bc3net(). Using ",
             "run_corr() instead.")
-    return(run_corr(x, ...))
+    return(run_corr(x, weights = weights, ...))
   } else {
     p <- ncol(x)
     scores <- matrix(0, nrow = p, ncol = p)
-    # Index the genes that have variability in their expression.
-    index <- which(apply(x, 2, function(val) !all(abs(val - mean(val)) < 1e-12)))
+    # Index the genes that have variability in their expression. (Using the max
+    # and min as done here is faster than computing var().)
+    index <- which(apply(x, 2, function(val) abs(max(val) - min(val)) > 1e-8))
     # If only 1 or fewer genes have variability, no network can be estimated.
-    if(length(index) <= 1) return(scores)
+    if(length(index) <= 1) 
+      return(scores)
+    
+    index_rows <- 1:nrow(x)
+    if(is.null(weights)) {
+      # Don't make any changes to x.
+    } else if(all(weights == 1 | weights == 0)) {
+      # Subset rows onto those with weight of 1.
+      index_rows <- (weights == 1)
+    } else {
+      # Subset rows onto those with weight above 0.5.
+      # TODO: this scenario will be updated if bc3net allows for weights.
+      index_rows <- (weights >= 0.5)
+    }
+    x <- x[index_rows, ]
+    weights <- weights[index_rows]
     
     scores[index, index] <- bc3net::bc3net(t(x[, index]), 
                                            boot = boot,
@@ -194,6 +233,9 @@ run_bc3net <- function(x, boot = 100, estimator = "spearman", disc = "equalwidth
 #' Can be used for the `network_inference` argument in \code{\link{dnapath}}.
 #' 
 #' @param x A n by p matrix of gene expression data (n samples and p genes).
+#' @param weights An optional vector of weights. This is used by `dnapath()` to
+#' apply the probabilistic group labels to each observation when estimating the
+#' group-specific network.
 #' @param estimator Argument is passed into \code{\link[bc3net]{c3mtc}}.
 #' @param disc Argument is passed into \code{\link[bc3net]{c3mtc}}.
 #' @param mtc Argument is passed into \code{\link[bc3net]{c3mtc}}.
@@ -227,7 +269,7 @@ run_bc3net <- function(x, boot = 100, estimator = "spearman", disc = "equalwidth
 #' # For example, the 'estimator' parameter can be specified as shown here.
 #' results <- dnapath(x = meso$gene_expression,
 #'                    pathway_list = pathway_list,
-#'                    groups = meso$groups,
+#'                    group_labels = meso$groups,
 #'                    n_perm = n_perm,
 #'                    network_inference = run_c3net,
 #'                    estimator = "pearson",
@@ -251,19 +293,36 @@ run_bc3net <- function(x, boot = 100, estimator = "spearman", disc = "equalwidth
 #' # First rename entrezgene IDs into gene symbols.
 #' SeqNet::plot_network(nw_list[[1]])
 #' }
-run_c3net <- function(x, estimator = "spearman",  disc = "equalwidth", 
-                      mtc = TRUE, adj = "bonferroni", alpha = 0.05, ...) {
+run_c3net <- function(x, weights = NULL, estimator = "spearman",  
+                      disc = "equalwidth", mtc = TRUE, 
+                      adj = "bonferroni", alpha = 0.05, ...) {
   if(!requireNamespace("bc3net", quietly = TRUE)) {
     message("Warning: The `bc3net` package must be installed to use run_c3net(). Using ",
             "run_corr() instead.")
-    return(run_corr(x, ...))
+    return(run_corr(x, weights = weights, ...))
   } else {
     p <- ncol(x)
     scores <- matrix(0, nrow = p, ncol = p)
-    # Index the genes that have variability in their expression.
-    index <- which(apply(x, 2, function(val) !all(abs(val - mean(val)) < 1e-12)))
+    # Index the genes that have variability in their expression. (Using the max
+    # and min as done here is faster than computing var().)
+    index <- which(apply(x, 2, function(val) abs(max(val) - min(val)) > 1e-8))
     # If only 1 or fewer genes have variability, no network can be estimated.
-    if(length(index) <= 1) return(scores)
+    if(length(index) <= 1) 
+      return(scores)
+    
+    index_rows <- 1:nrow(x)
+    if(is.null(weights)) {
+      # Don't make any changes to x.
+    } else if(all(weights == 1 | weights == 0)) {
+      # Subset rows onto those with weight of 1.
+      index_rows <- (weights == 1)
+    } else {
+      # Subset rows onto those with weight above 0.5.
+      # TODO: this scenario will be updated if c3mtc allows for weights.
+      index_rows <- (weights >= 0.5)
+    }
+    x <- x[index_rows, ]
+    weights <- weights[index_rows]
     
     scores[index, index] <- bc3net::c3mtc(t(x[, index]), 
                                           mtc = mtc,
@@ -288,6 +347,9 @@ run_c3net <- function(x, estimator = "spearman",  disc = "equalwidth",
 #' Can be used for the `network_inference` argument in \code{\link{dnapath}}.
 #' 
 #' @param x A n by p matrix of gene expression data (n samples and p genes).
+#' @param weights An optional vector of weights. This is used by `dnapath()` to
+#' apply the probabilistic group labels to each observation when estimating the
+#' group-specific network.
 #' @param estimator Argument is passed into \code{\link[minet]{build.mim}}.
 #' @param ... Additional arguments are ignored.
 #' @return A p by p matrix of association scores.
@@ -316,7 +378,7 @@ run_c3net <- function(x, estimator = "spearman",  disc = "equalwidth",
 #' # For example, the 'estimator' paramter can be specified as shown here.
 #' results <- dnapath(x = meso$gene_expression,
 #'                    pathway_list = pathway_list,
-#'                    groups = meso$groups,
+#'                    group_labels = meso$groups,
 #'                    n_perm = n_perm,
 #'                    network_inference = run_clr,
 #'                    estimator = "spearman")
@@ -339,18 +401,34 @@ run_c3net <- function(x, estimator = "spearman",  disc = "equalwidth",
 #' # First rename entrezgene IDs into gene symbols.
 #' SeqNet::plot_network(nw_list[[1]])
 #' }
-run_clr <- function(x, estimator = "spearman", ...) {
+run_clr <- function(x, weights = NULL, estimator = "spearman", ...) {
   if(!requireNamespace("minet", quietly = TRUE)) {
     message("Warning: The `minet` package must be installed to use run_clr(). Using ",
             "run_corr() instead.")
-    return(run_corr(x, ...))
+    return(run_corr(x, weights = weights, ...))
   } else {
     p <- ncol(x)
     scores <- matrix(0, nrow = p, ncol = p)
-    # Index the genes that have variability in their expression.
-    index <- which(apply(x, 2, function(val) !all(abs(val - mean(val)) < 1e-12)))
+    # Index the genes that have variability in their expression. (Using the max
+    # and min as done here is faster than computing var().)
+    index <- which(apply(x, 2, function(val) abs(max(val) - min(val)) > 1e-8))
     # If only 1 or fewer genes have variability, no network can be estimated.
-    if(length(index) <= 1) return(scores)
+    if(length(index) <= 1) 
+      return(scores)
+    
+    index_rows <- 1:nrow(x)
+    if(is.null(weights)) {
+      # Don't make any changes to x.
+    } else if(all(weights == 1 | weights == 0)) {
+      # Subset rows onto those with weight of 1.
+      index_rows <- (weights == 1)
+    } else {
+      # Subset rows onto those with weight above 0.5.
+      # TODO: this scenario will be updated if clr allows for weights.
+      index_rows <- (weights >= 0.5)
+    }
+    x <- x[index_rows, ]
+    weights <- weights[index_rows]
     
     mim <- minet::build.mim(x[, index], estimator = estimator)
     scores[index, index] <- minet::clr(mim)
@@ -369,6 +447,9 @@ run_clr <- function(x, estimator = "spearman", ...) {
 #' Can be used for the `network_inference` argument in \code{\link{dnapath}}.
 #' 
 #' @param x A n by p matrix of gene expression data (n samples and p genes).
+#' @param weights An optional vector of weights. This is used by `dnapath()` to
+#' apply the probabilistic group labels to each observation when estimating the
+#' group-specific network.
 #' @param threshold Cutoff for significant associations. If NULL, all correlations
 #' are returned. Otherwise, correlations of magnitude at or below this threshold are 
 #' set to zero.
@@ -398,7 +479,7 @@ run_clr <- function(x, estimator = "spearman", ...) {
 #' # For example, the 'method' parameter can be specified as shown here.
 #' results <- dnapath(x = meso$gene_expression,
 #'                    pathway_list = pathway_list,
-#'                    groups = meso$groups,
+#'                    group_labels = meso$groups,
 #'                    n_perm = n_perm,
 #'                    network_inference = run_corr,
 #'                    method = "spearman")
@@ -421,23 +502,48 @@ run_clr <- function(x, estimator = "spearman", ...) {
 #' # First rename entrezgene IDs into gene symbols.
 #' SeqNet::plot_network(nw_list[[1]])
 #' }
-run_corr <- function(x, threshold = NULL, 
+run_corr <- function(x, weights = NULL, threshold = NULL, 
                      method = c("pearson", "spearman"), ...) {
-  method <- method[1]
-  if(!(method %in% c("pearson", "spearman"))) {
+  method <- tolower(method[1])
+  if(method == "pearson") {
+    # Capitalized Pearson or Spearman for use with wCorr::weightedCorr.
+    method <- "Pearson" 
+  } else if(method == "spearman") {
+    method  <- "Spearman"
+  } else {
     stop('method should be one of c("pearson", "spearman").')
   }
   p <- ncol(x)
   scores <- matrix(0, nrow = p, ncol = p)
-  # Index the genes that have variability in their expression.
-  index <- which(apply(x, 2, function(val) !all(abs(val - mean(val)) < 1e-12)))
+  # Index the genes that have variability in their expression. (Using the max
+  # and min as done here is faster than computing var().)
+  index <- which(apply(x, 2, function(val) abs(max(val) - min(val)) > 1e-8))
   # If only 1 or fewer genes have variability, no network can be estimated.
-  if(length(index) <= 1) return(scores)
+  if(length(index) <= 1) 
+    return(scores)
+
+  index_rows <- 1:nrow(x)
+  if(is.null(weights)) {
+    # Don't make any changes to x.
+  } else if(all(weights == 1 | weights == 0)) {
+    # Subset rows onto those with weight of 1.
+    index_rows <- (weights == 1)
+  } else {
+    # Keep weights unchanged and all rows of x.
+  }
+  x <- x[index_rows, ]
+  weights <- weights[index_rows]
   
   if(is.integer(x[1, 1])) {
     x <- x + 0.0
   }
-  scores[index, index] <- cor(x[, index], method = method)
+  
+  k <- length(index)
+  index_set <- combn(k, 2)
+  scores[upper.tri(scores)] <- sapply(1:ncol(index_set), function(i) {
+    wCorr::weightedCorr(x[, index_set[1, i]], x[, index_set[2, i]], method = method, weights = weights)
+  })
+  scores <- scores + t(scores)
   diag(scores) <- 0
   
   if(!is.null(threshold)) {
@@ -445,6 +551,10 @@ run_corr <- function(x, threshold = NULL,
   }
   
   colnames(scores) <- colnames(x)
+  
+  if(any(is.na(scores))) {
+    scores[is.na(scores)] <- 0
+  }
   
   return(scores)
 }
@@ -457,6 +567,9 @@ run_corr <- function(x, threshold = NULL,
 #' Can be used for the `network_inference` argument in \code{\link{dnapath}}.
 #' 
 #' @param x A n by p matrix of gene expression data (n samples and p genes).
+#' @param weights An optional vector of weights. This is used by `dnapath()` to
+#' apply the probabilistic group labels to each observation when estimating the
+#' group-specific network.
 #' @param lambda1 A penalty parameter that controls degree sparsity of the 
 #' inferred network. See \code{\link[DWLasso]{DWLasso}} for details.
 #' @param lambda2 A penalty parameter that controls overall sparsity of the 
@@ -488,7 +601,7 @@ run_corr <- function(x, threshold = NULL,
 #' # For example, the 'lambda1' parameter can be specified as shown here.
 #' results <- dnapath(x = meso$gene_expression,
 #'                    pathway_list = pathway_list,
-#'                    groups = meso$groups,
+#'                    group_labels = meso$groups,
 #'                    n_perm = n_perm,
 #'                    network_inference = run_dwlasso,
 #'                    lambda1 = 0.5)
@@ -511,7 +624,7 @@ run_corr <- function(x, threshold = NULL,
 #' # First rename entrezgene IDs into gene symbols.
 #' SeqNet::plot_network(nw_list[[1]])
 #' }
-run_dwlasso <- function(x, lambda1 = 0.4, lambda2 = 2, ...) {
+run_dwlasso <- function(x, weights = NULL, lambda1 = 0.4, lambda2 = 2, ...) {
   if(!requireNamespace("DWLasso", quietly = TRUE)) {
     message("Warning: The `DWLasso` package must be installed to use run_dwlasso(). Using ",
             "run_corr() instead.")
@@ -519,10 +632,26 @@ run_dwlasso <- function(x, lambda1 = 0.4, lambda2 = 2, ...) {
   } else {
     p <- ncol(x)
     scores <- matrix(0, nrow = p, ncol = p)
-    # Index the genes that have variability in their expression.
-    index <- which(apply(x, 2, function(val) !all(abs(val - mean(val)) < 1e-12)))
+    # Index the genes that have variability in their expression. (Using the max
+    # and min as done here is faster than computing var().)
+    index <- which(apply(x, 2, function(val) abs(max(val) - min(val)) > 1e-8))
     # If only 1 or fewer genes have variability, no network can be estimated.
-    if(length(index) <= 1) return(scores)
+    if(length(index) <= 1) 
+      return(scores)
+    
+    index_rows <- 1:nrow(x)
+    if(is.null(weights)) {
+      # Don't make any changes to x.
+    } else if(all(weights == 1 | weights == 0)) {
+      # Subset rows onto those with weight of 1.
+      index_rows <- (weights == 1)
+    } else {
+      # Subset rows onto those with weight above 0.5.
+      # TODO: this scenario will be updated if DWLasso allows for weights.
+      index_rows <- (weights >= 0.5)
+    }
+    x <- x[index_rows, ]
+    weights <- weights[index_rows]
     
     result <- DWLasso::DWLasso(x[, index], lambda1 = lambda1, lambda2 = lambda2)
     scores[index, index] <- result$mat
@@ -545,6 +674,9 @@ run_dwlasso <- function(x, lambda1 = 0.4, lambda2 = 2, ...) {
 #' 
 #' @param x A n by p matrix of gene expression data (n samples and p genes).
 #' @param nTrees Argument is passed into \code{\link[GENIE3]{GENIE3}}. 
+#' @param weights An optional vector of weights. This is used by `dnapath()` to
+#' apply the probabilistic group labels to each observation when estimating the
+#' group-specific network.
 #' @param ... Additional arguments are ignored.
 #' @return A p by p matrix of association scores.
 #' @references 
@@ -572,7 +704,7 @@ run_dwlasso <- function(x, lambda1 = 0.4, lambda2 = 2, ...) {
 #' # For example, the 'nTrees' parameter can be specified as shown here.
 #' results <- dnapath(x = meso$gene_expression,
 #'                    pathway_list = pathway_list,
-#'                    groups = meso$groups,
+#'                    group_labels = meso$groups,
 #'                    n_perm = n_perm,
 #'                    network_inference = run_genie3,
 #'                    nTrees = 100)
@@ -594,7 +726,7 @@ run_dwlasso <- function(x, lambda1 = 0.4, lambda2 = 2, ...) {
 #' # First rename entrezgene IDs into gene symbols.
 #' SeqNet::plot_network(nw_list[[1]])
 #' }
-run_genie3 <- function(x, nTrees = 200, ...) {
+run_genie3 <- function(x, nTrees = 200, weights = NULL, ...) {
   if(!requireNamespace("GENIE3", quietly = TRUE)) {
     message("Warning: The `GENIE3` package must be installed to use run_genie3(). ", 
             "Using run_corr() instead.")
@@ -602,10 +734,26 @@ run_genie3 <- function(x, nTrees = 200, ...) {
   } else {
     p <- ncol(x)
     scores <- matrix(0, nrow = p, ncol = p)
-    # Index the genes that have variability in their expression.
-    index <- which(apply(x, 2, function(val) !all(abs(val - mean(val)) < 1e-12)))
+    # Index the genes that have variability in their expression. (Using the max
+    # and min as done here is faster than computing var().)
+    index <- which(apply(x, 2, function(val) abs(max(val) - min(val)) > 1e-8))
     # If only 1 or fewer genes have variability, no network can be estimated.
-    if(length(index) <= 1) return(scores)
+    if(length(index) <= 1) 
+      return(scores)
+    
+    index_rows <- 1:nrow(x)
+    if(is.null(weights)) {
+      # Don't make any changes to x.
+    } else if(all(weights == 1 | weights == 0)) {
+      # Subset rows onto those with weight of 1.
+      index_rows <- (weights == 1)
+    } else {
+      # Subset rows onto those with weight above 0.5.
+      # TODO: this scenario will be updated if GENIE3 allows for weights.
+      index_rows <- (weights >= 0.5)
+    }
+    x <- x[index_rows, ]
+    weights <- weights[index_rows]
     
     mat <- GENIE3::GENIE3(t(x[, index]), nTrees = nTrees)
     
@@ -639,6 +787,9 @@ run_genie3 <- function(x, nTrees = 200, ...) {
 #' @param criterion Argument is passed into \code{\link[huge]{huge.select}}.
 #' @param verbose Argument is passed into \code{\link[huge]{huge}} and 
 #' \code{\link[huge]{huge.select}}
+#' @param weights An optional vector of weights. This is used by `dnapath()` to
+#' apply the probabilistic group labels to each observation when estimating the
+#' group-specific network.
 #' @param ... Additional arguments are ignored.
 #' @return A p by p matrix of association scores.
 #' @references 
@@ -666,7 +817,7 @@ run_genie3 <- function(x, nTrees = 200, ...) {
 #' # For example, the 'criterion' parameter can be specified as shown here.
 #' results <- dnapath(x = meso$gene_expression,
 #'                    pathway_list = pathway_list,
-#'                    groups = meso$groups,
+#'                    group_labels = meso$groups,
 #'                    n_perm = n_perm,
 #'                    network_inference = run_glasso,
 #'                    criterion = "ric")
@@ -692,7 +843,7 @@ run_genie3 <- function(x, nTrees = 200, ...) {
 run_glasso <- function(x, 
                        method = c("glasso", "mb", "ct"), 
                        criterion = c("ric", "stars"), 
-                       verbose = FALSE, ...) {
+                       verbose = FALSE, weights = NULL, ...) {
   if(!requireNamespace("huge", quietly = TRUE)) {
     message("Warning: The `huge` package must be installed to use run_glasso(). Using ",
             "run_corr(x, method = 'pearson') instead.")
@@ -709,10 +860,26 @@ run_glasso <- function(x,
     
     p <- ncol(x)
     scores <- matrix(0, nrow = p, ncol = p)
-    # Index the genes that have variability in their expression.
-    index <- which(apply(x, 2, function(val) !all(abs(val - mean(val)) < 1e-12)))
+    # Index the genes that have variability in their expression. (Using the max
+    # and min as done here is faster than computing var().)
+    index <- which(apply(x, 2, function(val) abs(max(val) - min(val)) > 1e-8))
     # If only 1 or fewer genes have variability, no network can be estimated.
-    if(length(index) <= 1) return(scores)
+    if(length(index) <= 1) 
+      return(scores)
+    
+    index_rows <- 1:nrow(x)
+    if(is.null(weights)) {
+      # Don't make any changes to x.
+    } else if(all(weights == 1 | weights == 0)) {
+      # Subset rows onto those with weight of 1.
+      index_rows <- (weights == 1)
+    } else {
+      # Subset rows onto those with weight above 0.5.
+      # TODO: this scenario will be updated if huge allows for weights.
+      index_rows <- (weights >= 0.5)
+    }
+    x <- x[index_rows, ]
+    weights <- weights[index_rows]
     
     # Use unsigned to treat positive and negative associations equally.
     x_huge <- huge::huge(x[, index], method = method, verbose = verbose)
@@ -752,6 +919,9 @@ run_glasso <- function(x,
 #' 
 #' @param x A n by p matrix of gene expression data (n samples and p genes).
 #' @param estimator Argument is passed into \code{\link[minet]{build.mim}}.
+#' @param weights An optional vector of weights. This is used by `dnapath()` to
+#' apply the probabilistic group labels to each observation when estimating the
+#' group-specific network.
 #' @param ... Additional arguments are ignored.
 #' @return A p by p matrix of association scores.
 #' @references 
@@ -780,7 +950,7 @@ run_glasso <- function(x,
 #' # For example, the 'estimator' parameter can be specified as shown here.
 #' results <- dnapath(x = meso$gene_expression,
 #'                    pathway_list = pathway_list,
-#'                    groups = meso$groups,
+#'                    group_labels = meso$groups,
 #'                    n_perm = n_perm,
 #'                    network_inference = run_mrnet,
 #'                    estimator = "spearman")
@@ -803,7 +973,7 @@ run_glasso <- function(x,
 #' # First rename entrezgene IDs into gene symbols.
 #' SeqNet::plot_network(nw_list[[1]])
 #' }
-run_mrnet <- function(x, estimator = "spearman", ...) {
+run_mrnet <- function(x, estimator = "spearman", weights = NULL, ...) {
   if(!requireNamespace("minet", quietly = TRUE)) {
     message("Warning: The `minet` package must be installed to use run_mrnet(). Using ",
             "run_corr() instead.")
@@ -811,10 +981,26 @@ run_mrnet <- function(x, estimator = "spearman", ...) {
   } else {
     p <- ncol(x)
     scores <- matrix(0, nrow = p, ncol = p)
-    # Index the genes that have variability in their expression.
-    index <- which(apply(x, 2, function(val) !all(abs(val - mean(val)) < 1e-12)))
+    # Index the genes that have variability in their expression. (Using the max
+    # and min as done here is faster than computing var().)
+    index <- which(apply(x, 2, function(val) abs(max(val) - min(val)) > 1e-8))
     # If only 1 or fewer genes have variability, no network can be estimated.
-    if(length(index) <= 1) return(scores)
+    if(length(index) <= 1) 
+      return(scores)
+    
+    index_rows <- 1:nrow(x)
+    if(is.null(weights)) {
+      # Don't make any changes to x.
+    } else if(all(weights == 1 | weights == 0)) {
+      # Subset rows onto those with weight of 1.
+      index_rows <- (weights == 1)
+    } else {
+      # Subset rows onto those with weight above 0.5.
+      # TODO: this scenario will be updated if mrnet allows for weights.
+      index_rows <- (weights >= 0.5)
+    }
+    x <- x[index_rows, ]
+    weights <- weights[index_rows]
     
     mim <- minet::build.mim(x[, index], estimator = estimator)
     scores[index, index] <- minet::mrnet(mim)
@@ -838,6 +1024,9 @@ run_mrnet <- function(x, estimator = "spearman", ...) {
 #' @param ranks If TRUE, the gene expression values will be converted to ranks
 #' (across samples) prior to covariance estimation.
 #' @param verbose Argument is passed into \code{\link[corpcor]{pcor.shrink}}.
+#' @param weights An optional vector of weights. This is used by `dnapath()` to
+#' apply the probabilistic group labels to each observation when estimating the
+#' group-specific network.
 #' @param ... Additional arguments are ignored.
 #' @return A p by p matrix of association scores.
 #' @references 
@@ -863,7 +1052,7 @@ run_mrnet <- function(x, estimator = "spearman", ...) {
 #' # Use this method to perform differential network analysis.
 #' results <- dnapath(x = meso$gene_expression,
 #'                    pathway_list = pathway_list,
-#'                    groups = meso$groups,
+#'                    group_labels = meso$groups,
 #'                    n_perm = n_perm,
 #'                    network_inference = run_pcor)
 #' summary(results)
@@ -885,21 +1074,38 @@ run_mrnet <- function(x, estimator = "spearman", ...) {
 #' # First rename entrezgene IDs into gene symbols.
 #' SeqNet::plot_network(nw_list[[1]])
 #' }
-run_pcor <- function(x, ranks = TRUE, verbose = FALSE, ...) {
+run_pcor <- function(x, weights = NULL, ranks = FALSE, verbose = FALSE, ...) {
   p <- ncol(x)
-  n <- nrow(x)
   scores <- matrix(0, nrow = p, ncol = p)
-  # Index the genes that have variability in their expression.
-  index <- which(apply(x, 2, function(val) !all(abs(val - mean(val)) < 1e-12)))
+  # Index the genes that have variability in their expression. (Using the max
+  # and min as done here is faster than computing var().)
+  index <- which(apply(x, 2, function(val) abs(max(val) - min(val)) > 1e-8))
   # If only 1 or fewer genes have variability, no network can be estimated.
-  if(length(index) <= 1) return(scores)
+  if(length(index) <= 1) 
+    return(scores)
   
-  x_index <- x[, index]
+  index_rows <- 1:nrow(x)
+  if(is.null(weights)) {
+    # Don't make any changes to x.
+  } else if(all(weights == 1 | weights == 0)) {
+    # Subset rows onto those with weight of 1.
+    index_rows <- (weights == 1)
+  } else {
+    # Keep weights unchanged and all rows of x.
+  }
+  x <- x[index_rows, ]
+  weights <- weights[index_rows]
+  
   if(ranks) {
-    x_index <- apply(x_index, 2, rank)
+    x[, index] <- apply(x[, index], 2, rank)
   }
   
-  mat <- corpcor::pcor.shrink(x_index, verbose = verbose)
+  if(is.null(weights)) {
+    mat <- corpcor::pcor.shrink(x[, index], verbose = verbose)
+  } else {
+    mat <- corpcor::pcor.shrink(x[, index], w = weights, verbose = verbose)
+  }
+  
   mat <- matrix(as.numeric(mat), nrow = nrow(mat), ncol = ncol(mat))
   diag(mat) <- 0
   
@@ -918,6 +1124,9 @@ run_pcor <- function(x, ranks = TRUE, verbose = FALSE, ...) {
 #' Can be used for the `network_inference` argument in \code{\link{dnapath}}.
 #' 
 #' @param x A n by p matrix of gene expression data (n samples and p genes).
+#' @param weights An optional vector of weights. This is used by `dnapath()` to
+#' apply the probabilistic group labels to each observation when estimating the
+#' group-specific network.
 #' @param method Argument is passed into \code{\link[stats]{cor}}.
 #' @param verbose If TRUE, updates are printed during the estimation process.
 #' @param ... Additional arguments are ignored.
@@ -946,7 +1155,7 @@ run_pcor <- function(x, ranks = TRUE, verbose = FALSE, ...) {
 #' # For example, the 'method' parameter can be specified as shown here.
 #' results <- dnapath(x = meso$gene_expression,
 #'                    pathway_list = pathway_list,
-#'                    groups = meso$groups,
+#'                    group_labels = meso$groups,
 #'                    n_perm = n_perm,
 #'                    network_inference = run_silencer,
 #'                    method = "spearman")
@@ -969,13 +1178,30 @@ run_pcor <- function(x, ranks = TRUE, verbose = FALSE, ...) {
 #' # First rename entrezgene IDs into gene symbols.
 #' SeqNet::plot_network(nw_list[[1]])
 #' }
-run_silencer <- function(x, method = "spearman", verbose = FALSE, ...) {
+run_silencer <- function(x, weights = NULL, method = "spearman", 
+                         verbose = FALSE, ...) {
   p <- ncol(x)
   scores <- matrix(0, nrow = p, ncol = p)
-  # Index the genes that have variability in their expression.
-  index <- which(apply(x, 2, function(val) !all(abs(val - mean(val)) < 1e-12)))
+  # Index the genes that have variability in their expression. (Using the max
+  # and min as done here is faster than computing var().)
+  index <- which(apply(x, 2, function(val) abs(max(val) - min(val)) > 1e-8))
   # If only 1 or fewer genes have variability, no network can be estimated.
-  if(length(index) <= 1) return(scores)
+  if(length(index) <= 1) 
+    return(scores)
+  
+  index_rows <- 1:nrow(x)
+  if(is.null(weights)) {
+    # Don't make any changes to x.
+  } else if(all(weights == 1 | weights == 0)) {
+    # Subset rows onto those with weight of 1.
+    index_rows <- (weights == 1)
+  } else {
+    # Subset rows onto those with weight above 0.5.
+    # TODO: this scenario will be updated if silencer allows for weights.
+    index_rows <- (weights >= 0.5)
+  }
+  x <- x[index_rows, ]
+  weights <- weights[index_rows]
   
   Norm <-  0.5
   # First calculate correlation matrix.
@@ -1054,6 +1280,9 @@ run_silencer <- function(x, method = "spearman", verbose = FALSE, ...) {
 #' This method will use Empirical Bayes FDR to set some estimates to zero. 
 #' 
 #' @param x A n by p matrix of gene expression data (n samples and p genes).
+#' @param weights An optional vector of weights. This is used by `dnapath()` to
+#' apply the probabilistic group labels to each observation when estimating the
+#' group-specific network.
 #' @param ranks If TRUE, the gene expression values will be converted to ranks
 #' (across samples) prior to covariance estimation.
 #' @param thrsh A positive value (defaults to 1.5). This is used as
@@ -1084,7 +1313,7 @@ run_silencer <- function(x, method = "spearman", verbose = FALSE, ...) {
 #' # Use this method to perform differential network analysis.
 #' results <- dnapath(x = meso$gene_expression,
 #'                    pathway_list = pathway_list,
-#'                    groups = meso$groups,
+#'                    group_labels = meso$groups,
 #'                    n_perm = n_perm,
 #'                    network_inference = run_pcor)
 #' summary(results)
@@ -1106,11 +1335,12 @@ run_silencer <- function(x, method = "spearman", verbose = FALSE, ...) {
 #' # First rename entrezgene IDs into gene symbols.
 #' SeqNet::plot_network(nw_list[[1]])
 #' }
-run_pcor_fdr <- function(x, ranks = TRUE, thrsh = 1.5, verbose = FALSE, ...) {
+run_pcor_fdr <- function(x, weights = NULL, ranks = TRUE, thrsh = 1.5, 
+                         verbose = FALSE, ...) {
   p <- ncol(x)
   
   # First, estimate the network using the partial correlation method.
-  scores <- run_pcor(x, ranks, verbose, ...)
+  scores <- run_pcor(x, weights = weights, ranks = ranks, verbose = verbose, ...)
   
   # Extract the individual partial correlation estimates.
   vals <- scores[lower.tri(scores)]

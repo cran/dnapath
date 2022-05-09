@@ -9,6 +9,7 @@ run_glasso(
   method = c("glasso", "mb", "ct"),
   criterion = c("ric", "stars"),
   verbose = FALSE,
+  weights = NULL,
   ...
 )
 }
@@ -21,6 +22,10 @@ run_glasso(
 
 \item{verbose}{Argument is passed into \code{\link[huge]{huge}} and
 \code{\link[huge]{huge.select}}}
+
+\item{weights}{An optional vector of weights. This is used by \code{dnapath()} to
+apply the probabilistic group labels to each observation when estimating the
+group-specific network.}
 
 \item{...}{Additional arguments are ignored.}
 }
@@ -46,7 +51,7 @@ n_perm <- 1
 # For example, the 'criterion' parameter can be specified as shown here.
 results <- dnapath(x = meso$gene_expression,
                    pathway_list = pathway_list,
-                   groups = meso$groups,
+                   group_labels = meso$groups,
                    n_perm = n_perm,
                    network_inference = run_glasso,
                    criterion = "ric")

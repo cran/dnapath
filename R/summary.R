@@ -30,7 +30,7 @@
 #' data(p53_pathways)
 #' set.seed(0)
 #' results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-#'                    groups = meso$groups, n_perm = 10)
+#'                    group_labels = meso$groups, n_perm = 10)
 #' summary(results[[1]])  # Summary of pathway 1; note that it uses entrezgene IDs.
 #' 
 #' \donttest{
@@ -68,7 +68,7 @@ rename_genes <- function(x, gene_mat = NULL, to = NULL, species = NULL, ...) {
   if(is.factor(gene_mat[, 2])) 
     gene_mat[, 2] <- as.character(gene_mat[, 2])
   
-  if(class(x) == "dnapath_list" || class(x) == "dnapath") {
+  if(is(x, "dnapath") || is(x, "dnapath_list")) {
     new_gene_names <- x$param$gene_names # Start with the old names.
     # Subset gene_mat onto genes contained in the dnapath results.
     gene_mat <- gene_mat[gene_mat[, 1] %in% new_gene_names, ]
@@ -134,12 +134,12 @@ rename_genes <- function(x, gene_mat = NULL, to = NULL, species = NULL, ...) {
 #' data(p53_pathways)
 #' set.seed(0)
 #' results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-#'                    groups = meso$groups, n_perm = 10)
+#'                    group_labels = meso$groups, n_perm = 10)
 #' genes <- get_genes(results)
 get_genes <- function(x) {
-  if(class(x) == "dnapath_list") {
+  if(is(x, "dnapath_list")) {
     genes <- x$param$gene_names
-  } else if(class(x) == "dnapath") {
+  } else if(is(x, "dnapath")) {
     index <- x$pathway$genes
     genes <- x$param$gene_names[index]
   } else if(is.list(x) &&
@@ -176,10 +176,10 @@ get_genes <- function(x) {
 #' data(p53_pathways)
 #' set.seed(0)
 #' results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-#'                    groups = meso$groups, n_perm = 10)
+#'                    group_labels = meso$groups, n_perm = 10)
 #' results_sig <- filter_pathways(results)
 filter_pathways <- function(x, alpha_pathway = NULL, monotonized = FALSE) {
-  if(class(x) != "dnapath_list")
+  if(!is(x, "dnapath_list"))
     stop(deparse(substitute(x)), " is not a 'dnapath_list' object.")
   
   if(is.null(alpha_pathway)) {
@@ -220,7 +220,7 @@ filter_pathways <- function(x, alpha_pathway = NULL, monotonized = FALSE) {
 #' the pathway.
 #' @keywords internal
 summarize_genes_for_pathway <- function(x, alpha = NULL, monotonized = FALSE) {
-  if(class(x) != "dnapath") 
+  if(!is(x, "dnapath"))
     stop(deparse(substitute(x)), " is not a 'dnapath' object.")
   
   if(is.null(alpha)) {
@@ -280,12 +280,11 @@ summarize_genes_for_pathway <- function(x, alpha = NULL, monotonized = FALSE) {
 #' 
 #' @param x A 'dnapath_list' object from \code{\link{dnapath}}.
 #' @param alpha Threshold for p-values of pathway DC scores. 
-#' If NULL (or 1), results for all pathways are shown.
+#' Defaults to 1, which leads to results for all pathways being shown.
 #' @param alpha_gene Threshold for p-values of gene DC scores. Used to determine
 #' the number of genes that are differentially connected within each pathway.
-#' If NULL,
-#' defaults to 0.05 or the minimum possible threshold (based on the
-#' number of permutatiosn that were run).
+#' Defaults to 0.1 or the minimum possible threshold for the number
+#' of permutations performed, whichever is greater.
 #' @param monotonized If TRUE, monotonized p-values are used.
 #' @return A tibble summarizing the differential connectivity of genes in
 #' the pathway.
@@ -297,14 +296,14 @@ summarize_genes_for_pathway <- function(x, alpha = NULL, monotonized = FALSE) {
 #' data(p53_pathways)
 #' set.seed(0)
 #' results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-#'                    groups = meso$groups, n_perm = 10)
+#'                    group_labels = meso$groups, n_perm = 10)
 #' summarize_pathways(results)
-summarize_pathways <- function(x, alpha = NULL, alpha_gene = NULL,
+summarize_pathways <- function(x, alpha = 1, alpha_gene = 0.1,
                                monotonized = FALSE) {
-  if(class(x) == "dnapath") {
+  if(is(x, "dnapath")) {
     # If a single pathway is provided, return a summary of the edges.
     return(summarize_edges(x))
-  } else if(class(x) != "dnapath_list"){
+  } else if(!is(x, "dnapath_list")) {
     stop(deparse(substitute(x)), " is not a 'dnapath_list' or ",
          "'dnapath' object.")
   }
@@ -349,7 +348,7 @@ summarize_pathways <- function(x, alpha = NULL, alpha_gene = NULL,
   n_genes <- sapply(x$pathway, function(x) x$n_genes)
   
   if(is.null(alpha_gene)) {
-    alpha_gene <- 1
+    alpha_gene <- 0.1
   }
   if(alpha_gene < get_min_alpha(x)) {
     warning("alpha_gene = ", alpha_gene, " is too low given the number of ",
@@ -367,13 +366,11 @@ summarize_pathways <- function(x, alpha = NULL, alpha_gene = NULL,
   
   mean_expr1 <- rep(0, length(x))
   mean_expr2 <- rep(0, length(x))
-  mean_expr <- rbind(
-    apply(x$param$x[1:x$param$n[1], ], 2, mean),
-    apply(x$param$x[-(1:x$param$n[1]), ], 2, mean))
+  mean_expr <- get_mean_expr_mat(x)
   for(i in 1:length(x)) {
     index_genes <- x$pathway[[i]]$genes
-    mean_expr1[i] <- sum(mean_expr[1, index_genes]) / n_genes[i]
-    mean_expr2[i] <- sum(mean_expr[2, index_genes]) / n_genes[i]
+    mean_expr1[i] <- mean(mean_expr[1, index_genes])
+    mean_expr2[i] <- mean(mean_expr[2, index_genes])
   }
   
   # Note, mean_expr are divided by n_genes, the total number of possible genes
@@ -400,9 +397,9 @@ summarize_pathways <- function(x, alpha = NULL, alpha_gene = NULL,
 #' 
 #' @param x A 'dnapath_list' object from \code{\link{dnapath}}.
 #' @param alpha Threshold for p-values of gene DC scores. Used to determine
-#' the number of pathways that each gene is differentially connected in. If NULL,
-#' defaults to 0.05 or the minimum possible threshold (based on the
-#' number of permutatiosn that were run).
+#' the number of pathways that each gene is differentially connected in.
+#' Defaults to 0.1 or the minimum possible threshold for the number
+#' of permutations performed, whichever is greater.
 #' @param monotonized If TRUE, monotonized p-values are used.
 #' @return A tibble summarizing the differential connectivity of genes across
 #' all pathways.
@@ -414,19 +411,19 @@ summarize_pathways <- function(x, alpha = NULL, alpha_gene = NULL,
 #' data(p53_pathways)
 #' set.seed(0)
 #' results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-#'                    groups = meso$groups, n_perm = 10)
+#'                    group_labels = meso$groups, n_perm = 10)
 #' summarize_genes(results) # Summary of genes across all pathways.
 #' summarize_genes(results[[1]]) # Summary of genes within the first pathway.
-summarize_genes <- function(x, alpha = NULL, monotonized = FALSE) {
-  if(class(x) == "dnapath") {
+summarize_genes <- function(x, alpha = 0.1, monotonized = FALSE) {
+  if(is(x, "dnapath")) {
     return(summarize_genes_for_pathway(x, alpha, monotonized))
-  } else if(class(x) != "dnapath_list"){
+  } else if(!is(x, "dnapath_list")) {
     stop(deparse(substitute(x)), " is not a 'dnapath_list' or ",
          "'dnapath' object.")
   }
   
   if(is.null(alpha)) {
-    alpha <- max(0.05, get_min_alpha(x))
+    alpha <- max(0.1, get_min_alpha(x))
   }
   if(alpha < get_min_alpha(x)) {
     warning("alpha = ", alpha, " is too low given the number of ",
@@ -487,9 +484,9 @@ summarize_genes <- function(x, alpha = NULL, monotonized = FALSE) {
 #' Summarize differential connections for a pathway
 #' 
 #' @param x A 'dnapath' object from \code{\link{dnapath}}.
-#' @param alpha Threshold for p-values of edge DC scores. If NULL,
-#' defaults to 0.05 or the minimum possible threshold (based on the
-#' number of permutatiosn that were run).
+#' @param alpha Threshold for p-values of edge DC scores.
+#' Defaults to 0.1 or the minimum possible threshold for the number
+#' of permutations performed, whichever is greater.
 #' @param monotonized If TRUE, monotonized p-values are used.
 #' @param require_dc_genes If TRUE, the gene-level differential connectivity
 #' p-value of the two genes for a given edge are also considered when deciding
@@ -505,20 +502,20 @@ summarize_genes <- function(x, alpha = NULL, monotonized = FALSE) {
 #' data(p53_pathways)
 #' set.seed(0)
 #' results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-#'                    groups = meso$groups, n_perm = 10)
+#'                    group_labels = meso$groups, n_perm = 10)
 #' summarize_edges(results[[1]])
-summarize_edges <- function(x, alpha = NULL, monotonized = FALSE, 
+summarize_edges <- function(x, alpha = 0.1, monotonized = FALSE, 
                             require_dc_genes = FALSE) {
-  if(class(x) == "dnapath_list")
+  if(is(x, "dnapath_list"))
     stop("Summary of edges is not available for `dnapath_list` object. ",
          "Try again using a specific pathway, which can be done by ",
          "indexing the 'dnapath_list' object; for example ",
          deparse(substitute(x)), "[[1]] will access the first pathway.")
-  if(class(x) != "dnapath")
+  if(!is(x, "dnapath"))
     stop(deparse(substitute(x)), " is not a 'dnapath' object.")
   
   if(is.null(alpha)) {
-    alpha <- 1
+    alpha <- 0.1
   }
   if(alpha < get_min_alpha(x)) {
     warning("alpha = ", alpha, " is too low given the number of ",
@@ -606,13 +603,13 @@ summarize_edges <- function(x, alpha = NULL, monotonized = FALSE,
 #' data(meso)
 #' data(p53_pathways)
 #' results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-#'                    groups = meso$groups, n_perm = 5)
+#'                    group_labels = meso$groups, n_perm = 5)
 #' get_min_alpha(results) # 1 / (5 + 1) = 0.167
 #' results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-#'                    groups = meso$groups, n_perm = 10)
+#'                    group_labels = meso$groups, n_perm = 10)
 #' get_min_alpha(results) # 1 / (10 + 1) = 0.091
 get_min_alpha <- function(x) {
-  if(class(x) == "dnapath" || class(x) == "dnapath_list") {
+  if(is(x, "dnapath") || is(x, "dnapath_list")) {
     return(1 / (x$param$n_perm + 1))
   } else {
     return(NA)

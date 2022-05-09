@@ -4,7 +4,7 @@
 \alias{summary.dnapath}
 \title{Summary function for 'dnapath' object.}
 \usage{
-\method{summary}{dnapath}(object, by_gene = TRUE, alpha = NULL, monotonized = FALSE, ...)
+\method{summary}{dnapath}(object, by_gene = TRUE, alpha = 1, monotonized = FALSE, ...)
 }
 \arguments{
 \item{object}{A 'dnapath' object from \code{\link{dnapath}}.}
@@ -32,7 +32,7 @@ data(meso)
 data(p53_pathways)
 set.seed(0)
 results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-                   groups = meso$groups, n_perm = 10)
+                   group_labels = meso$groups, n_perm = 10)
 summary(results[[1]]) # Summary of the first pathway in the results.
 }
 \seealso{

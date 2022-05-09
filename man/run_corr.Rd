@@ -4,10 +4,20 @@
 \alias{run_corr}
 \title{Wrapper for correlation co-expression}
 \usage{
-run_corr(x, threshold = NULL, method = c("pearson", "spearman"), ...)
+run_corr(
+  x,
+  weights = NULL,
+  threshold = NULL,
+  method = c("pearson", "spearman"),
+  ...
+)
 }
 \arguments{
 \item{x}{A n by p matrix of gene expression data (n samples and p genes).}
+
+\item{weights}{An optional vector of weights. This is used by \code{dnapath()} to
+apply the probabilistic group labels to each observation when estimating the
+group-specific network.}
 
 \item{threshold}{Cutoff for significant associations. If NULL, all correlations
 are returned. Otherwise, correlations of magnitude at or below this threshold are
@@ -39,7 +49,7 @@ n_perm <- 5
 # For example, the 'method' parameter can be specified as shown here.
 results <- dnapath(x = meso$gene_expression,
                    pathway_list = pathway_list,
-                   groups = meso$groups,
+                   group_labels = meso$groups,
                    n_perm = n_perm,
                    network_inference = run_corr,
                    method = "spearman")

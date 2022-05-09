@@ -13,7 +13,7 @@ str(meso)
 # Run dnapath using the gene expression and group information from meso dataset.
 results <- dnapath(meso$gene_expression, 
                    pathway_list = NULL, 
-                   groups = meso$groups)
+                   group_labels = meso$groups)
 results
 
 ## -----------------------------------------------------------------------------
@@ -26,7 +26,7 @@ data(p53_pathways)
 # Run the differential network analysis.
 results <- dnapath(x = meso$gene_expression,
                    pathway_list = p53_pathways,
-                   groups = meso$groups,
+                   group_labels = meso$groups,
                    seed = 0)
 
 results

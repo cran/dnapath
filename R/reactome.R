@@ -67,14 +67,22 @@ get_reactome_pathways <- function(species, overlap_limit = 0.9, min_size = 10,
   # library(reactome.db)
   # Map reactome NAME to reactome ID. Subset on pathways for this species.
   reactome_to_id <- reactome.db::reactomePATHNAME2ID
-  index <- which(tolower(species) == 
-                   tolower(gsub(":.*", "", AnnotationDbi::keys(reactome_to_id))))
+  pathway_for_species <- gsub(":.*", "", AnnotationDbi::keys(reactome_to_id))
+  index <- which(tolower(species) == tolower(pathway_for_species))
   if(length(index) == 0) {
-    available_species <- unique(
-      gsub("(: .*)", "", names(as.list(reactome_to_id))))
-    stop(species, " is not an available species. Use one of the following:\n\t", 
-         paste(available_species[-length(available_species)], collapse = ",\n\t"), 
-         available_species[length(available_species)], ".")
+    available_species <- unique(pathway_for_species)
+    if(tolower(species) %in% tolower(available_species)) {
+      message("Warning: Unknown problem occured when accessing `reactome.db`. Please check ",
+              "that the packages `AnnotationDbi` and `reactome.db` are up-to-date. ", 
+              "Returning the p53_pathway list by default.\n")
+      return(dnapath::p53_pathways)
+    } else {
+      message(species, " is not an available species. Use one of the following:\n\t", 
+           paste(available_species[-length(available_species)], collapse = ",\n\t"), 
+           ",\n\t", available_species[length(available_species)], ".")
+      message("Returning the p53_pathway list by default.")
+      return(dnapath::p53_pathways)
+    }
   }
   reactome_to_id <- reactome_to_id[index]
   reactome_to_id <- as.list(reactome_to_id)
@@ -232,7 +240,7 @@ entrez_to_symbol <- function(x,
                              symbol_name = NULL,
                              dir_save = tempdir(),
                              verbose = TRUE) {
-  if(class(x) %in% c("dnapath", "dnapath_list")) {
+  if(is(x, "dnapath") || is(x, "dnapath_list")) {
     stop("Input should be a vector of entrezgene IDs, not a dnapath object. ",
          'Use rename_genes() with `to = "symbol"`')
   }
@@ -339,7 +347,7 @@ symbol_to_entrez <- function(x,
                              dir_save = tempdir(),
                              verbose = TRUE) {
   
-  if(class(x) %in% c("dnapath", "dnapath_list")) {
+  if(is(x, "dnapath") || is(x, "dnapath_list")) {
     stop("Input should be a vector of entrezgene IDs, not a dnapath object.")
   }
   
@@ -359,10 +367,7 @@ symbol_to_entrez <- function(x,
     }
   }
   
-  # Use biomaRt to obtain the mapping.
-  gene_info <- get_biomart_mapping(species, symbol_name, dir_save, verbose)
-  if(!is.null(gene_info))
-    gene_info <- gene_info %>%
+  gene_info <- get_biomart_mapping(species, symbol_name, dir_save, verbose) %>%
     dplyr::group_by(dplyr::across(dplyr::all_of(symbol_name))) %>%
     dplyr::summarise(dplyr::across(dplyr::everything(), dplyr::first)) 
   
@@ -461,23 +466,8 @@ get_biomart_mapping <- function(species, symbol_name, dir_save, verbose) {
                 "Using archived biomart data for hsapiens.")
         gene_info <- dnapath::biomart_hsapiens
       } else {
-        gene_info <- tryCatch(
-          biomaRt::getBM(attributes = c("entrezgene_id", symbol_name), mart = mart),
-          error = function(e) {
-            # Something went wrong; set mart to NULL so results aren't saved later.
-            mart <- NULL
-            if(!curl::has_internet()) {
-              message("Error: Internet connection is not available. The init_mart() ",
-                      "was successful but unable to use getBM(). The archived ", 
-                      "biomart data for hspaiens will be used.")
-              return(dnapath::biomart_hsapiens)
-            } else {
-              message("Error: unable to use getBM(). Using the archived data ",
-                      "for hsapiens.")
-              return(dnapath::biomart_hsapiens)
-            }
-          }
-        )
+        gene_info <- biomaRt::getBM(attributes = c("entrezgene_id", symbol_name),
+                                    mart = mart)
       }
       
       # Process the mapping:

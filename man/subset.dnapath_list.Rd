@@ -34,7 +34,7 @@ pathway_list <- get_reactome_pathways("human", overlap_limit = NULL,
                                       min_size = 13, max_size = 19)
 # Run the differential network analysis.
 results <- dnapath(x = meso$gene_expression, pathway_list = pathway_list,
-                   groups = meso$groups, n_perm = 5, seed = 0)
+                   group_labels = meso$groups, n_perm = 5, seed = 0)
 summary(results) # Summary over all pathways in the pathway list.
 
 # Subset on pathways that contain "cell cycle" in its name.

@@ -22,9 +22,9 @@ permutation p-values obtained in the differential network analysis.
 data(meso)
 data(p53_pathways)
 results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-                   groups = meso$groups, n_perm = 5)
+                   group_labels = meso$groups, n_perm = 5)
 get_min_alpha(results) # 1 / (5 + 1) = 0.167
 results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-                   groups = meso$groups, n_perm = 10)
+                   group_labels = meso$groups, n_perm = 10)
 get_min_alpha(results) # 1 / (10 + 1) = 0.091
 }

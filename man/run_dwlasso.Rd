@@ -4,10 +4,14 @@
 \alias{run_dwlasso}
 \title{Wrapper for degree-weighted lasso method}
 \usage{
-run_dwlasso(x, lambda1 = 0.4, lambda2 = 2, ...)
+run_dwlasso(x, weights = NULL, lambda1 = 0.4, lambda2 = 2, ...)
 }
 \arguments{
 \item{x}{A n by p matrix of gene expression data (n samples and p genes).}
+
+\item{weights}{An optional vector of weights. This is used by \code{dnapath()} to
+apply the probabilistic group labels to each observation when estimating the
+group-specific network.}
 
 \item{lambda1}{A penalty parameter that controls degree sparsity of the
 inferred network. See \code{\link[DWLasso]{DWLasso}} for details.}
@@ -39,7 +43,7 @@ n_perm <- 1
 # For example, the 'lambda1' parameter can be specified as shown here.
 results <- dnapath(x = meso$gene_expression,
                    pathway_list = pathway_list,
-                   groups = meso$groups,
+                   group_labels = meso$groups,
                    n_perm = n_perm,
                    network_inference = run_dwlasso,
                    lambda1 = 0.5)

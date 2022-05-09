@@ -7,12 +7,13 @@
 dnapath(
   x,
   pathway_list,
-  groups = NULL,
+  group_labels = NULL,
   network_inference = run_pcor,
   n_perm = 100,
   lp = 2,
   seed = NULL,
   verbose = FALSE,
+  mc.cores = 1,
   ...
 )
 }
@@ -22,7 +23,7 @@ list of two matrices or data frames that contain the gene expression profile
 from each of two populations (groups) -- with rows corresponding to samples
 and columns to genes -- or (2) a single matrix or data frame
 that contains the expression profiles for both groups. For case (2), the
-\code{groups} argument must be specified to identify which rows belong to which
+\code{group_labels} argument must be specified to identify which rows belong to which
 group.}
 
 \item{pathway_list}{A single vector or list of vectors containing gene names
@@ -32,10 +33,13 @@ of the matrices in \code{x}. A pathway list can be obtained using
 dataset is analyzed as a single network (this approach is not recommended
 unless there are only a small number of genes).}
 
-\item{groups}{If \code{x} is a single matrix or data frame, \code{groups} must
-be specified to label each row. \code{groups} is a vector of length equal to the
-number of rows in \code{x}, and it should contain two unique elements
-(the two group names).}
+\item{group_labels}{If \code{x} is a single matrix or data frame, \code{group_labels} must
+be specified to label each row. \code{group_labels} is a matrix each row
+corresponding to a in \code{x}. This matrix may either (1) have a single column
+containing the group label for each observation, or (2) individual columns
+representing each group with values in \verb{[0, 1]} representing the probability
+that the patient in that row is in each group. In the latter case, if the
+rows do not sum to 1, then each entry will be divided by its row sum.}
 
 \item{network_inference}{A function used to infer the pathway network. It
 should take in an n by p matrix and return a p by p matrix of association
@@ -65,6 +69,10 @@ reproduced.}
 
 \item{verbose}{Set to TRUE to turn on messages.}
 
+\item{mc.cores}{Used in \code{\link[parallel]{mclapply}} to run the differential
+network analysis in parallel across pathways. Must be set to 1 if on a Windows
+machine.}
+
 \item{...}{Additional arguments are passed into the network inference function.}
 }
 \value{
@@ -80,7 +88,7 @@ data(meso)
 data(p53_pathways)
 set.seed(0)
 results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-                   groups = meso$groups, n_perm = 10)
+                   group_labels = meso$groups, n_perm = 10)
 results
 summary(results) # Summary over all pathways in the pathway list.
 # Remove results for pathways with p-values above 0.2.
@@ -94,7 +102,7 @@ plot(results[[1]]) # Plot of the differential network for pathway 1.
 # Use ... to adjust arguments in the network inference function.
 # For example, using run_corr() with method = "spearman":
 results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-                   groups = meso$groups, n_perm = 10,
+                   group_labels = meso$groups, n_perm = 10,
                    network_inference = run_corr,
                    method = "spearman")
 results

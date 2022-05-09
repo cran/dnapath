@@ -11,7 +11,7 @@ utils::globalVariables(c("p_value", "dc_score", "mean_expr1", "mean_expr2"))
 #' from each of two populations (groups) -- with rows corresponding to samples
 #' and columns to genes -- or (2) a single matrix or data frame 
 #' that contains the expression profiles for both groups. For case (2), the 
-#' `groups` argument must be specified to identify which rows belong to which 
+#' `group_labels` argument must be specified to identify which rows belong to which 
 #' group.
 #' @param pathway_list A single vector or list of vectors containing gene names 
 #' to indicate pathway membership. The vectors are used to subset the columns
@@ -19,10 +19,13 @@ utils::globalVariables(c("p_value", "dc_score", "mean_expr1", "mean_expr2"))
 #' \code{\link{get_reactome_pathways}}. If NULL, then the entire expression 
 #' dataset is analyzed as a single network (this approach is not recommended 
 #' unless there are only a small number of genes).
-#' @param groups If `x` is a single matrix or data frame, `groups` must 
-#' be specified to label each row. `groups` is a vector of length equal to the 
-#' number of rows in `x`, and it should contain two unique elements 
-#' (the two group names).
+#' @param group_labels If `x` is a single matrix or data frame, `group_labels` must 
+#' be specified to label each row. `group_labels` is a matrix each row 
+#' corresponding to a in `x`. This matrix may either (1) have a single column
+#' containing the group label for each observation, or (2) individual columns 
+#' representing each group with values in `[0, 1]` representing the probability 
+#' that the patient in that row is in each group. In the latter case, if the 
+#' rows do not sum to 1, then each entry will be divided by its row sum. 
 #' @param network_inference A function used to infer the pathway network. It
 #' should take in an n by p matrix and return a p by p matrix of association 
 #' scores. (Built-in options include: \code{\link{run_aracne}}, 
@@ -46,6 +49,9 @@ utils::globalVariables(c("p_value", "dc_score", "mean_expr1", "mean_expr2"))
 #' each pathway. This allows results for individual pathways to be easily 
 #' reproduced.
 #' @param verbose Set to TRUE to turn on messages.
+#' @param mc.cores Used in \code{\link[parallel]{mclapply}} to run the differential
+#' network analysis in parallel across pathways. Must be set to 1 if on a Windows
+#' machine.
 #' @param ... Additional arguments are passed into the network inference function.
 #' @return A 'dnapath_list' or 'dnapath' object containing results for each 
 #' pathway in `pathway_list`.
@@ -61,7 +67,7 @@ utils::globalVariables(c("p_value", "dc_score", "mean_expr1", "mean_expr2"))
 #' data(p53_pathways)
 #' set.seed(0)
 #' results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-#'                    groups = meso$groups, n_perm = 10)
+#'                    group_labels = meso$groups, n_perm = 10)
 #' results
 #' summary(results) # Summary over all pathways in the pathway list.
 #' # Remove results for pathways with p-values above 0.2.
@@ -75,25 +81,110 @@ utils::globalVariables(c("p_value", "dc_score", "mean_expr1", "mean_expr2"))
 #' # Use ... to adjust arguments in the network inference function.
 #' # For example, using run_corr() with method = "spearman":
 #' results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-#'                    groups = meso$groups, n_perm = 10,
+#'                    group_labels = meso$groups, n_perm = 10,
 #'                    network_inference = run_corr,
 #'                    method = "spearman")
 #' results
-dnapath <- function(x, pathway_list, groups = NULL,
+dnapath <- function(x, pathway_list, group_labels = NULL,
                 network_inference = run_pcor, n_perm = 100, lp = 2, 
-                seed = NULL, verbose = FALSE, ...) {
+                seed = NULL, verbose = FALSE, mc.cores = 1, ...) {
   
   #################################################################
-  # Process the x input. 
-  # - Coerce x into a matrix and create groups vector if necessary.
+  # Process the input. 
+  # - Create a matrix of group probabilities from group_labels
+  # - Coerce x into a matrix, if necessary.
   # - If pathway_list is a list, subset columns of x onto these genes.
   # - Check n_perm is not too large for the given sample size.
   #################################################################
-  # Handle the list and single matrix cases separately.
+  
+  #
+  # First process the group_labels argument, if provided.
+  #
+  if(!is.null(group_labels)) {
+    # If group_labels is a vector, coerce into a matrix.
+    if(is.null(dim(group_labels))) {
+      group_labels <- matrix(group_labels, ncol = 1)
+    }
+    # If group_labels is a data frame, tibble, etc., coerce into matrix.
+    group_labels <- tryCatch(as.matrix(group_labels),
+                             error = function(e) 
+                               stop("'group_labels' must be coercable into a matrix."))
+    
+    # Create the group probability matrix. Handle each type of input separately.
+    if(ncol(group_labels) == 1) {
+      if(is.numeric(group_labels)) {
+        # If a numeric vector (of probabilities) was provided, then check that
+        # the values are in [0, 1] and add the missing column.
+        
+        if(!all(group_labels >= 0 & group_labels <= 1)) {
+          if(length(unique(group_labels)) == 1) {
+            stop("The values in `group_labels` appear to be two unique numbers. ",
+                 "For discrete group labels, please use characters (such as the",
+                 "group names).")
+          } else {
+            stop("The values in `group_labels` must be in [0, 1].")
+          }
+        }
+        group_prob <- matrix(0, nrow = nrow(group_labels), ncol = 2)
+        group_prob[, 1] <- group_labels
+        group_prob[, 2] <- 1 - group_labels
+        
+        # Add the group names, if provided. Otherwise, use "A" and "B".
+        if(!is.null(colnames(group_labels))) {
+          group_name <- colnames(group_labels)
+          colnames(group_prob) <- c(group_name, paste("not", group_name))
+        } else {
+          colnames(group_prob) <- c("A", "B")
+        }
+      } else {
+        # If a character vector was provided, then check that there are two unique
+        # names and fill in the probability matrix with 1's and 0's.
+        
+        group_names <- as.character(unique(group_labels))
+        if(length(unique(group_names)) != 2)
+          stop("length(unique(group_labels)) = ", length(unique(group_names)), ", ",
+               "expected to equal 2. For example, if the first n rows ",
+               'are from group "a" and the last m rows are from group "b", then ',
+               "'x' should contain n + m rows and 'group' may be the ",
+               'vector c(rep("a", n), rep("b", m)).')
+        group_prob <- matrix(0, nrow = nrow(group_labels), ncol = 2)
+        group_prob[group_labels == group_names[1], 1] <- 1
+        group_prob[group_labels == group_names[2], 2] <- 1
+        colnames(group_prob) <- group_names
+      }
+      #
+      # End of case with ncol(group_labels) = 1
+      #
+    } else if(ncol(group_labels) == 2) {
+      if(!is.numeric(group_labels))
+        stop("Argument `group_labels` should be numeric when provided as a ",
+             "two column matrix.")
+      row_totals <- rowSums(group_labels)
+      if(any(group_labels < 0)) {
+        stop("The values in `group_labels` should be non-negative.")
+      }
+      if(any(row_totals <= 0)) {
+        stop("The rows in `group_labels` do not sum to a positive number.")
+      }
+      group_prob <- group_labels / row_totals
+      
+      #
+      # End of case with ncol(group_labels) = 2
+      #
+    } else {
+      stop("'group_labels' contains more than two columns.")
+    }
+  }
+  
+  #
+  # Process x: handle the list and single matrix cases separately.
+  #
   if(inherits(x, "list")) {
     # Expecting x to be a list of two matrices.
     if(length(x) != 2) 
       stop("'x' is a list but does not contain two matrices.")
+    if(!is.null(group_labels)) 
+      warning("`group_labels` ignored when `x` is a list.")
     
     gene_freq <- table(colnames(x[[1]]))
     if(any(gene_freq > 1)) {
@@ -108,54 +199,38 @@ dnapath <- function(x, pathway_list, groups = NULL,
            '".', " The column names should be unique; one column per gene.")
     }
     
-    # Save the group labels, if there are any.
-    group_labels <- names(x)
-    if(is.null(group_labels)) 
-      group_labels <- c("1", "2")
+    # Save the group names, if there are any.
+    group_names <- names(x)
+    if(is.null(group_names)) 
+      group_names <- c("1", "2")
     
     # Store the number of samples in each dataset.
     n <- c(nrow(x[[1]]), nrow(x[[2]]))
     
-    # Create the groups vector.
-    groups <- rep(group_labels, n)
-    
-    if(inherits(x, "list")) {
-      # Expecting x to be a list of two matrices.
-      if(length(x) != 2) 
-        stop("'x' list does not contain two matrices.")
-    } else {
-      x <- x[, colnames(x) %in% genes]
-    }
+    # Create the group probabilities matrix.
+    group_prob <- cbind(c(rep(1, n[1]), rep(0, n[2])), 
+                         c(rep(0, n[1]), rep(1, n[2])))
+    colnames(group_prob) <- group_names
     
     # Join the two datasets and coerce the output into a matrix.
-    x <- as.matrix(merge(x[[1]], x[[2]], 
-                         all = TRUE, sort = FALSE))
-    
+    x <- as.matrix(merge(x[[1]], x[[2]], all = TRUE, sort = FALSE))
+
   } else {
-    # x must be a matrix.
-    # Allow data.frame, tibble, and other objects that are coercible to matrix.
+    # First check that `group_labels` is provided.
+    # The `group_prob` variable will have already been created.
+    if(is.null(group_labels)) 
+      stop("'group_labels' must be specified when 'x' is a single matrix.")
+    
+    # `x` is assumed to be a matrix, but allow data.frame, tibble, and other 
+    # objects that are coercible to matrix.
     x <- tryCatch(as.matrix(x),
                   error = function(e) 
                     stop("'x' is not a list and as.matrix() failed."))
-    if(is.null(groups)) 
-      stop("'groups' must be specified when 'x' is a single matrix.")
     
-    # If groups is a matrix, data frame, tibble, etc., coerce into vector.
-    if(!is.null(ncol(groups)) && ncol(groups) == 1) 
-      groups <- as.matrix(groups)[, 1]
-    if(!is.null(ncol(groups)) && ncol(groups) > 1) 
-      stop("'groups' contains multiple columns. This must be a single vector.")
-    
-    if(length(unique(groups)) != 2)
-      stop("length(unique(groups)) = ", length(unique(groups)), ", ",
-           "expected to equal 2. For example, if the first n rows ",
-           'are from group "a" and the last m rows are from group "b", then ',
-           "'x' should contain n + m rows and 'group' may be the ",
-           'vector c(rep("a", n), rep("b", m)).')
-    if(length(groups) != nrow(x))
-      stop("length(groups) = ", length(groups), ", but nrow(x) = ",
-           nrow(x), ". These must be equal.")
-    
+    # `group_labels` are already processed, so `group_prob` has been created.
+    if(nrow(group_prob) != nrow(x))
+      stop("The length of `group_labels` does not match the number of rows in `x`")
+
     gene_freq <- table(colnames(x))
     if(any(gene_freq > 1)) {
       stop('Multiple columns found in `x` for the following genes: "', 
@@ -163,19 +238,26 @@ dnapath <- function(x, pathway_list, groups = NULL,
            '".', " The column names should be unique; one column per gene.")
     }
     
-    # Order rows to ensure that group 1 is first, followed by group 2.
-    group_labels <- unique(groups)
-    index_group_1 <- which(groups == group_labels[1])
-    index_group_2 <- which(groups == group_labels[2])
-    x <- x[c(index_group_1, index_group_2), ]
-    
-    # Store the number of samples in each dataset.
-    n <- c(length(index_group_1), length(index_group_2))
-    
-    # Reset the groups vector.
-    groups <- rep(group_labels, n)
+    if(all(group_prob %in% c(0, 1))) {
+      # Rearrange rows of x with the first n[1] observations of group 1
+      # followed by the n[2] observations from group 2.
+      index_n1 <- which(group_prob[, 1] == 1)
+      index_n2 <- which(group_prob[, 2] == 1)
+      x <- x[c(index_n1, index_n2), ]
+      group_prob[c(index_n1, index_n2), ]
+    } else {
+      # Rearrange rows of x in descending order of group 1 probability.
+      index_order <- order(group_prob[, 1], decreasing = TRUE)
+      x <- x[index_order, ]
+      group_prob <- group_prob[index_order, ]
+    }
   }
   
+  #
+  # `x` has been processed into a single matrix and `group_prob` is created.
+  #
+  
+  # Check that `x` is numeric. 
   if(!is.numeric(x)) {
     stop("Non-numeric columns found in 'x'.")
   }
@@ -183,7 +265,7 @@ dnapath <- function(x, pathway_list, groups = NULL,
   # Fill in missing values with 0
   index_na <- which(is.na(x))
   if(length(index_na) > 0) {
-    # Note: these may occur when mergining the two datasets from a list.
+    # Note: these may occur when merging the two datasets from a list.
     x[index_na] <- 0
   }
   index_nan <- which(is.nan(x))
@@ -191,24 +273,76 @@ dnapath <- function(x, pathway_list, groups = NULL,
     warning("Setting ", length(index_nan), " NaN gene expression values to 0.")
     x[index_nan] <- 0
   }
-  
   if(is.null(colnames(x))) {
     stop("The gene expression data do not contain column names (genes names).")
   }
-
-  # Check that n_perm is achievable with given sample size.
-  N <- nrow(x)
-  if(n[1] == n[2]) {
-    n_perm_max <- choose(N, n[1]) / 2 - 1
-  } else {
-    n_perm_max <- choose(N, n[1]) - 1
-  }
-  if(n_perm_max < n_perm) {
-    warning("Only ", n_perm_max, " permutations are possible with the given ",
-            "sample size. Setting 'n_perm' to this value.")
-    n_perm <- n_perm_max
-  }
   
+  #
+  # Initialize the permutations, which is stored as an N by n_perm matrix.
+  #
+  
+  # Set seed for reproducibility, if one is provided.
+  if(!is.null(seed))
+    set.seed(seed)
+    
+  #
+  # If group labels are provided (i.e. all probabilities are either 1 or 0),
+  # then we need to be more careful with the permutation testing to ensure
+  # each permutation swaps at least one observation across groups (as opposed
+  # to only permuting within groups, which can happen just by chance).
+  #
+  N <- nrow(x)
+  if(all(group_prob[, 1] == 1 | group_prob[, 1] == 0)) {
+    n <- colSums(group_prob) # Sample size within each group.
+    # Check that n_perm is achievable with given sample size.
+    if(n[1] == n[2]) {
+      n_perm_max <- choose(N, n[1]) / 2 - 1
+    } else {
+      n_perm_max <- choose(N, n[1]) - 1
+    }
+    if(n_perm_max < n_perm) {
+      warning("Only ", n_perm_max, " permutations are possible with the given ",
+              "sample size. Setting 'n_perm' to this value.")
+      n_perm <- n_perm_max
+    }
+    
+    # If group classes are provided, then check sample sizes when
+    # creating the permutations. If total number of observations is small, use 
+    # exact set of permutations. Order of samples doesn't matter, so keep only 
+    # first half if sample sizes are the same. If sample sizes are unequal, all 
+    # permutations are used.
+    if((n[1] == n[2]) && (choose(N, n[1]) / 2 <= n_perm)) {
+      permutations <- combn(1:N, n[1])
+      permutations <- permutations[, 1:(ncol(permutations) / 2)] 
+      permutations <- permutations[, -1] # The first column is 1:n[1].
+    } else if((n[1] != n[2]) && (choose(N, n[1]) <= n_perm)) {
+      permutations <- combn(1:N, n[1])
+      permutations <- permutations[, -1] # The first column is 1:n[1].
+    } else {
+      permutations <- cbind(sapply(1:n_perm, function(x) sample(1:N, n[1])))
+    }
+    permutations <- apply(permutations, 2, function(perm) c(perm, setdiff(1:N, perm)))
+    # Obtain the row indices for each group and map those to the permutations.
+    index <- c(which(group_prob[, 1] == 1), 
+               which(group_prob[, 2] == 1))
+    permutation <- apply(permutations, 2, function(i) i[index])
+  } else { # `group_prob` contains probabilities.
+    n <- nrow(x) # Total sample size.
+    n_perm_max <- factorial(N) - 1
+    if(n_perm_max < n_perm) {
+      warning("Only ", n_perm_max, " permutations are possible with the given ",
+              "sample size. Setting 'n_perm' to this value.")
+      n_perm <- n_perm_max
+    }
+    if(n_perm_max == n_perm) {
+      # Obtain all the permutations.
+      permutations <- t(gtools::permutations(N, N))[, -1]
+      permutations <- permutations[, -1] # The first column is 1:N.
+    } else {
+      # Sample `n_perm` permutations (randomization test).
+      permutations <- cbind(sapply(1:n_perm, function(x) sample(1:N, N)))
+    }
+  }
   
   #################################################################
   # Perform dnapath over each pathway in the pathway list.
@@ -216,8 +350,7 @@ dnapath <- function(x, pathway_list, groups = NULL,
   if(is.null(pathway_list)) {
     # If no pathway list is provided, use all the genes in the dataset.
     pathway_list <- list(colnames(x))
-  }
-  if(!is.list(pathway_list)) {
+  } else if(!is.list(pathway_list)) {
     # If a single pathway is provided, coerce it into a list.
     pathway_list <- list(pathway_list)
   }
@@ -225,17 +358,20 @@ dnapath <- function(x, pathway_list, groups = NULL,
   # Make sure there are no duplicate genes in any pathway.
   pathway_list <- lapply(pathway_list, unique)
   
-  # Subset x onto the genes within the pathway list.
+  # Subset `x` onto the genes within the pathway list.
   # Subset the expression data onto those genes contained in pathways.
   genes <- unique(unlist(pathway_list))
   n_total_genes <- ncol(x)
   x <- x[, colnames(x) %in% genes]
   gene_names <- colnames(x)
   
-  results_by_pathway <- lapply(pathway_list, function(pathway) {
-    dna_pathway(x, pathway, groups, network_inference,
-                n_perm, lp, seed, verbose, ...)
-  })
+  if(length(gene_names) == 0) 
+    stop("None of the genes in `x` are in any pathway in `pathway_list`.")
+  
+  results_by_pathway <- parallel::mclapply(pathway_list, function(pathway) {
+    dna_pathway(x, pathway, group_prob, network_inference, permutations, 
+                lp, verbose, ...)
+  }, mc.cores = mc.cores)
   
   # Determine which pathways returned results.
   index_null <- which(sapply(results_by_pathway, is.null))
@@ -284,7 +420,8 @@ dnapath <- function(x, pathway_list, groups = NULL,
            n_total_genes = n_total_genes,
            n_pathways_containing_gene = counts,
            n = n,
-           groups = group_labels,
+           groups = colnames(group_prob),
+           group_prob = group_prob,
            network_inference = network_inference,
            n_perm = n_perm,
            lp = lp[i],
@@ -333,37 +470,29 @@ dnapath <- function(x, pathway_list, groups = NULL,
 #' @param x The gene expression data to be analyzed. Assumed to already be
 #' processed by \code{\link{dnapath}}
 #' @param pathway A single vector containing gene names.
-#' @param groups A vector of length equal to the 
-#' number of rows in `x` containing two unique elements 
-#' (the two group names).
+#' @param group_prob A matrix with number of rows equal to the 
+#' number of rows in `x` and two columns, each containing the probability that
+#' a given observation belongs to each group.
 #' @param network_inference A function used to infer the pathway network. 
-#' @param n_perm The number of random permutations to perform during 
-#' permutation testing. If `n_perm == 1`, the permutation tests are not performed.
+#' @param permutations A matrix containing the permutations to perform during 
+#' permutation testing. If `NULL`, the permutation tests are not performed.
 #' @param lp The lp value used to compute differential connectivity
 #' scores. (Note: If a vector is provided, then the results are returned as
 #' a list of `dnapath_list` objects, one result for each value of `lp`. This 
 #' option is available so that network inference methods only need to be run 
 #' once for each pathway when multple values of `lp` are being considered. This
 #' may be useful when conducting simulation studies).
-#' @param seed (Optional) Used to set.seed prior to permutation test for
-#' each pathway. This allows results for individual pathways to be easily 
-#' reproduced.
 #' @param verbose Set to TRUE to turn on messages.
 #' @param ... Additional arguments are passed into the network inference function.
 #' @return A list containing the results of the differential network analysis
 #' for a single pathway.
 #' @keywords internal
-dna_pathway <- function(x, pathway, groups = NULL,
-                    network_inference = run_pcor, n_perm = 100, lp = 2, 
-                    seed = NULL, verbose = FALSE, ...) {
+dna_pathway <- function(x, pathway, group_prob, network_inference, permutations, 
+                        lp = 2, verbose = FALSE, ...) {
   
   #################################################################
   # Run differential network analysis on the pathway
   #################################################################
-  # Set seed for reproducibility of permutation test, if one is provided.
-  if(!is.null(seed)) {
-    set.seed(seed)
-  }
   
   gene_names <- colnames(x)
   pathway_genes <- which(gene_names %in% pathway)
@@ -372,46 +501,22 @@ dna_pathway <- function(x, pathway, groups = NULL,
       cat("Fewer than two genes are expressed in a pathway. Returning NULL.\n")
     return(NULL)
   }
+  
   x <- x[, pathway_genes]
   # Store the number of genes in the pathway.
   # Note, this may not equal length(pathway_genes).
   n_genes <- length(pathway)
   
-  group_labels <- unique(groups)
-  index_group_1 <- which(groups == group_labels[1])
-  index_group_2 <- which(groups == group_labels[2])
-  # Store the number of samples in each dataset.
-  n <- c(length(index_group_1), length(index_group_2))
-  
-  N <- nrow(x) # Total number of observations across both samples.
+  n_perm <- ncol(permutations)
   p <- ncol(x) # Total number of genes in union.
   n_lp <- length(lp)
   
-  # If total number of observations is small, use exact set of permutations. 
-  # Order of samples doesn't matter, so keep only first half if sample sizes
-  # are the same. If sample sizes are unequal, all permutations are used.
-  if((n[1] == n[2]) && (choose(N, n[1]) / 2 <= n_perm)) {
-    permutations <- combn(1:N, n[1])
-    permutations <- permutations[, 1:(ncol(permutations) / 2)] 
-    permutations <- permutations[, -1]
-  } else if((n[1] != n[2]) && (choose(N, n[1]) <= n_perm)) {
-    permutations <- combn(1:N, n[1])
-    permutations <- permutations[, -1]
-  } else {
-    permutations <- cbind(sapply(1:n_perm, function(x) sample(1:N, n[1])))
-  }
-  
-  if(ncol(permutations) < n_perm) 
-    warning("Only ", ncol(permutations), " possible permutations. Setting ",
-            "'n_perm' to this value.")
-  
-  n_perm <- ncol(permutations)
+  # Estimate the network for each group using the original data.
+  scores_1 <- network_inference(x, weights = group_prob[, 1], ...)
+  scores_2 <- network_inference(x, weights = group_prob[, 2], ...)
   
   # Initialize lists to store DC scores and p-values for each lp in lp.
   # Scores are initialized to 0 and p-values to 1.
-  scores_1 <- network_inference(x[1:n[1], ], ...)
-  scores_2 <- network_inference(x[-(1:n[1]), ], ...)
-  
   d_path_list <- lapply(lp, function(lp) d_pathwayC(scores_1, scores_2, lp = lp))
   d_gene_list <- lapply(lp, function(lp) d_genesC(scores_1, scores_2, lp = lp))
   d_edge_list <- lapply(lp, function(lp) d_edgesC(scores_1, scores_2, lp = lp))
@@ -437,16 +542,15 @@ dna_pathway <- function(x, pathway, groups = NULL,
   if(all(scores_1 == 0) && all(scores_2 == 0)) {
     if(verbose)
       cat("Inferred network is empty. Permutation test not performed.\n")
-    n_perm <- 1 # Only original data were considered.
-  } else {
+    n_perm <- 0 # Only original data were considered.
+  } else if(n_perm > 0) {
+    # Iterate over each permutation.
     for(i in 1:n_perm) {
-      network_1 <- permutations[, i]
-      
-      scores_1 <- network_inference(x[network_1, ], ...)
-      scores_1[which(is.na(scores_1))] <- 0
-      scores_2 <- network_inference(x[-network_1, ], ...)
-      scores_2[which(is.na(scores_2))] <- 0
-      
+      # Permute the rows of the group probabilities and re-estimate the networks.
+      group_prob_perm <- group_prob[permutations[, i], ]
+      scores_1 <- network_inference(x, weights = group_prob_perm[, 1], ...)
+      scores_2 <- network_inference(x, weights = group_prob_perm[, 2], ...)
+
       for(k in 1:n_lp) {
         pval_path_list[[k]] <- pval_path_list[[k]] +
           (d_pathwayC(scores_1, scores_2, lp = lp[[k]]) >= d_path_list[[k]])
@@ -486,7 +590,7 @@ dna_pathway <- function(x, pathway, groups = NULL,
   }
   
   # If no permutation testing is done, set p-values to NA.
-  if(n_perm == 1) {
+  if(n_perm == 0) {
     pval_path_list <- lapply(pval_path_list, function(pval) NA)
     pval_gene_list <- lapply(pval_gene_list, function(pval) NA)
     pval_edge_list <- lapply(pval_edge_list, function(pval) NA)
@@ -621,9 +725,9 @@ print.dnapath <- function(x, ...) {
 #' @param alpha_pathway Threshold for p-values of pathway DC scores; used 
 #' to subset the results. If NULL (or 1), results for all pathways are shown.
 #' @param alpha_gene Threshold for p-values of gene DC scores. Used to determine
-#' the number of genes that are differentially connected within each pathway. If NULL,
-#' defaults to 0.05 or the minimum possible threshold (based on the
-#' number of permutatiosn that were run).
+#' the number of genes that are differentially connected within each pathway.
+#' Defaults to 0.1 or the minimum possible threshold for the number
+#' of permutations performed, whichever is greater.
 #' @param monotonized If TRUE, monotonized p-values are used.
 #' @param ... Additional arguments are ignored.
 #' @return Summarizes the differential network analysis results.
@@ -635,13 +739,13 @@ print.dnapath <- function(x, ...) {
 #' data(p53_pathways)
 #' set.seed(0)
 #' results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-#'                    groups = meso$groups, n_perm = 10)
+#'                    group_labels = meso$groups, n_perm = 10)
 #' summary(results) # Summary across all pathways in the analysis.
 summary.dnapath_list <- function(object, by_gene = FALSE, 
-                             alpha_pathway = NULL, alpha_gene = NULL, 
+                             alpha_pathway = 1, alpha_gene = 0.1, 
                              monotonized = FALSE, ...) {
   if(is.null(alpha_gene)) {
-    alpha_gene <- max(0.05, get_min_alpha(object))
+    alpha_gene <- max(0.1, get_min_alpha(object))
   }
   if(alpha_gene < get_min_alpha(object)) {
     warning("alpha_gene = ", alpha_gene, " is too low given the number of ",
@@ -692,9 +796,9 @@ summary.dnapath_list <- function(object, by_gene = FALSE,
 #' data(p53_pathways)
 #' set.seed(0)
 #' results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-#'                    groups = meso$groups, n_perm = 10)
+#'                    group_labels = meso$groups, n_perm = 10)
 #' summary(results[[1]]) # Summary of the first pathway in the results.
-summary.dnapath <- function(object, by_gene = TRUE, alpha = NULL, 
+summary.dnapath <- function(object, by_gene = TRUE, alpha = 1, 
                             monotonized = FALSE, ...) {
   if(is.null(alpha)) {
     alpha <- 1
@@ -742,7 +846,7 @@ summary.dnapath <- function(object, by_gene = TRUE, alpha = NULL,
 #'                                       min_size = 13, max_size = 19)
 #' # Run the differential network analysis.
 #' results <- dnapath(x = meso$gene_expression, pathway_list = pathway_list,
-#'                    groups = meso$groups, n_perm = 5, seed = 0)
+#'                    group_labels = meso$groups, n_perm = 5, seed = 0)
 #' summary(results) # Summary over all pathways in the pathway list.
 #' 
 #' # Subset on pathways that contain "cell cycle" in its name.
@@ -850,14 +954,14 @@ subset.dnapath_list <- function(x, pathways = NULL, genes = NULL, ...) {
 #' data(p53_pathways)
 #' set.seed(0)
 #' results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-#'                    groups = meso$groups, n_perm = 10)
+#'                    group_labels = meso$groups, n_perm = 10)
 #' # Filter out pathways that have p-values above 0.2.
 #' results_sig <- filter_pathways(results, 0.2) 
 #' sort(results_sig, by = "dc_score") # Sort by the pathway DC score.
 #' sort(results_sig, by = "n_genes") # Sort by the pathway size.
 #' sort(results_sig, by = "mean_expr") # Sort by the mean expression.
 sort.dnapath_list <- function(x, decreasing = TRUE, by = "dc_score", ...) {
-  if(class(x) != "dnapath_list")
+  if(!is(x, "dnapath_list"))
     stop(deparse(substitute(x)), " is not a 'dnapath_list' object.")
   
   by <- tolower(by[1])
@@ -974,7 +1078,7 @@ sort.dnapath_list <- function(x, decreasing = TRUE, by = "dc_score", ...) {
 #' data(p53_pathways)
 #' set.seed(0)
 #' results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways[[1]],
-#'                    groups = meso$groups, n_perm = 10)
+#'                    group_labels = meso$groups, n_perm = 10)
 #' results[1]
 `[.dnapath` <- function(x, i, ...) {
   return(x)
@@ -993,7 +1097,7 @@ sort.dnapath_list <- function(x, decreasing = TRUE, by = "dc_score", ...) {
 #' data(p53_pathways)
 #' set.seed(0)
 #' results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-#'                    groups = meso$groups, n_perm = 10)
+#'                    group_labels = meso$groups, n_perm = 10)
 #' results[[1]]
 `[[.dnapath_list` <- function(x, i, ...) {
   if(length(i) != 1) {
@@ -1018,7 +1122,7 @@ sort.dnapath_list <- function(x, decreasing = TRUE, by = "dc_score", ...) {
 #' data(p53_pathways)
 #' set.seed(0)
 #' results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways[[1]],
-#'                    groups = meso$groups, n_perm = 10)
+#'                    group_labels = meso$groups, n_perm = 10)
 #' results[[1]]
 `[[.dnapath` <- function(x, i, ...) {
   return(x)
@@ -1093,7 +1197,7 @@ sort.dnapath_list <- function(x, decreasing = TRUE, by = "dc_score", ...) {
 #' data(p53_pathways)
 #' set.seed(0)
 #' results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-#'                    groups = meso$groups, n_perm = 10)
+#'                    group_labels = meso$groups, n_perm = 10)
 #' # Filter out pathways that have p-values above 0.2.
 #' results <- filter_pathways(results, 0.2) 
 #' results <- sort(results, by = "dc_score") # Sort by the pathway DC score.
@@ -1117,7 +1221,7 @@ rev.dnapath_list <- function(x, ...) {
 #' data(p53_pathways)
 #' set.seed(0)
 #' results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-#'                    groups = meso$groups, n_perm = 10)
+#'                    group_labels = meso$groups, n_perm = 10)
 #' names(results)
 names.dnapath_list <- function(x) {
   pathway_names <- unname(sapply(x$pathway, function(path) path$name))
@@ -1135,7 +1239,7 @@ names.dnapath_list <- function(x) {
 #' data(p53_pathways)
 #' set.seed(0)
 #' results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-#'                    groups = meso$groups, n_perm = 10)
+#'                    group_labels = meso$groups, n_perm = 10)
 #' names(results[[1]])
 names.dnapath <- function(x) {
   pathway <- unname(x$pathway$name)
@@ -1156,7 +1260,7 @@ names.dnapath <- function(x) {
 #' data(p53_pathways)
 #' set.seed(0)
 #' results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-#'                    groups = meso$groups, n_perm = 10)
+#'                    group_labels = meso$groups, n_perm = 10)
 #' length(results)
 length.dnapath_list <- function(x) {
   return(length(x$pathway))
@@ -1179,7 +1283,7 @@ length.dnapath_list <- function(x) {
 #' data(p53_pathways)
 #' set.seed(0)
 #' results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-#'                    groups = meso$groups, n_perm = 10)
+#'                    group_labels = meso$groups, n_perm = 10)
 #' head(results)
 head.dnapath_list <- function(x, ...) {
   tab <- summary(x, ...)
@@ -1203,7 +1307,7 @@ head.dnapath_list <- function(x, ...) {
 #' data(p53_pathways)
 #' set.seed(0)
 #' results <- dnapath(x = meso$gene_expression, pathway_list = p53_pathways,
-#'                    groups = meso$groups, n_perm = 10)
+#'                    group_labels = meso$groups, n_perm = 10)
 #' tail(results)
 tail.dnapath_list <- function(x, ...) {
   tab <- summary(x, ...)
@@ -1225,11 +1329,18 @@ tail.dnapath_list <- function(x, ...) {
 #' each gene in the pathway.
 #' @keywords internal
 get_mean_expr_mat <- function(x) {
-  mean_expr <- rbind(
-    apply(x$param$x[1:x$param$n[1], match(get_genes(x), colnames(x$param$x))], 
-          2, mean),
-    apply(x$param$x[-(1:x$param$n[1]), match(get_genes(x),colnames(x$param$x))], 
-          2, mean))
+  # If sample sizes for each group aren't available, use weighted mean.
+  if(length(x$param$n) == 1) {
+    mean_expr <- rbind(
+      colSums(x$param$x[, match(get_genes(x), colnames(x$param$x))] * x$param$group_prob[, 1]) / 
+        sum(x$param$group_prob[, 1]),
+      colSums(x$param$x[, match(get_genes(x), colnames(x$param$x))] * x$param$group_prob[, 2]) / 
+        sum(x$param$group_prob[, 2]))
+  } else {
+    mean_expr <- rbind(
+      colMeans(x$param$x[1:x$param$n[1], match(get_genes(x), colnames(x$param$x))]),
+      colMeans(x$param$x[-(1:x$param$n[1]), match(get_genes(x),colnames(x$param$x))]))
+  }
   
   return(mean_expr)
 }
