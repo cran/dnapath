@@ -71,8 +71,7 @@ SeqNet::plot_network(nw_list[[1]])
 \seealso{
 \code{\link{run_aracne}},
 \code{\link{run_bc3net}}, \code{\link{run_c3net}},
-\code{\link{run_clr}}, \code{\link{run_corr}},
-\code{\link{run_dwlasso}}, \code{\link{run_genie3}},
+\code{\link{run_clr}}, \code{\link{run_corr}}, \code{\link{run_genie3}},
 \code{\link{run_glasso}}, \code{\link{run_mrnet}}, and
 \code{\link{run_pcor}}
 }

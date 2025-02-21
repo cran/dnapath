@@ -4,16 +4,16 @@
 \alias{run_genie3}
 \title{Wrapper for GENIE3 method}
 \usage{
-run_genie3(x, nTrees = 200, weights = NULL, ...)
+run_genie3(x, weights = NULL, nTrees = 200, ...)
 }
 \arguments{
 \item{x}{A n by p matrix of gene expression data (n samples and p genes).}
 
-\item{nTrees}{Argument is passed into \code{\link[GENIE3]{GENIE3}}.}
-
 \item{weights}{An optional vector of weights. This is used by \code{dnapath()} to
 apply the probabilistic group labels to each observation when estimating the
 group-specific network.}
+
+\item{nTrees}{Argument is passed into \code{\link[GENIE3]{GENIE3}}.}
 
 \item{...}{Additional arguments are ignored.}
 }
@@ -70,7 +70,6 @@ SeqNet::plot_network(nw_list[[1]])
 \code{\link{run_aracne}},
 \code{\link{run_bc3net}}, \code{\link{run_c3net}},
 \code{\link{run_clr}}, \code{\link{run_corr}},
-\code{\link{run_dwlasso}},
 \code{\link{run_glasso}}, \code{\link{run_mrnet}},
 \code{\link{run_pcor}}, and \code{\link{run_silencer}}
 }

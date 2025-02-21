@@ -12,7 +12,7 @@
 
 <meta name="author" content="Tyler Grimes" />
 
-<meta name="date" content="2022-05-08" />
+<meta name="date" content="2025-02-20" />
 
 <title>Package datasets</title>
 
@@ -122,13 +122,20 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
   for (var i = 0; i < sheets.length; i++) {
     if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
     try { var rules = sheets[i].cssRules; } catch (e) { continue; }
-    for (var j = 0; j < rules.length; j++) {
+    var j = 0;
+    while (j < rules.length) {
       var rule = rules[j];
       // check if there is a div.sourceCode rule
-      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
       var style = rule.style.cssText;
       // check if color or background-color is set
-      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
       // replace div.sourceCode by a pre.sourceCode rule
       sheets[i].deleteRule(j);
       sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
@@ -334,7 +341,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 <h1 class="title toc-ignore">Package datasets</h1>
 <h4 class="author">Tyler Grimes</h4>
-<h4 class="date">2022-05-08</h4>
+<h4 class="date">2025-02-20</h4>
 
 
 <div id="TOC">
@@ -365,16 +372,17 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>pathway_list <span class="ot">&lt;-</span> dnapath<span class="sc">::</span><span class="fu">get_reactome_pathways</span>(<span class="st">&quot;human&quot;</span>)</span></code></pre></div>
 <pre><code>## Obtaining reactome pathway information for species: Homo sapiens 
 ## Combining pathways that have greater than 90 % overlap.</code></pre>
-<p>This list contains the gene sets for 885 pathways. Here are the first two pathways:</p>
+<p>This list contains the gene sets for 952 pathways. Here are the first two pathways:</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>pathway_list[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>]</span></code></pre></div>
-<pre><code>## $`Purine salvage`
-##  [1] &quot;100&quot;    &quot;132&quot;    &quot;161823&quot; &quot;1633&quot;   &quot;1716&quot;   &quot;270&quot;    &quot;271&quot;    &quot;272&quot;   
-##  [9] &quot;2766&quot;   &quot;3251&quot;   &quot;353&quot;    &quot;4860&quot;   &quot;51292&quot; 
+<pre><code>## $`Paracetamol ADME`
+##  [1] &quot;10&quot;     &quot;10057&quot;  &quot;10257&quot;  &quot;1244&quot;   &quot;124975&quot; &quot;1571&quot;   &quot;2678&quot;   &quot;2686&quot;  
+##  [9] &quot;2687&quot;   &quot;27233&quot;  &quot;2944&quot;   &quot;2950&quot;   &quot;2952&quot;   &quot;4363&quot;   &quot;445329&quot; &quot;54575&quot; 
+## [17] &quot;54578&quot;  &quot;54600&quot;  &quot;54658&quot;  &quot;55748&quot;  &quot;6783&quot;   &quot;6817&quot;   &quot;6818&quot;   &quot;6822&quot;  
+## [25] &quot;7366&quot;   &quot;8714&quot;   &quot;9&quot;      &quot;9429&quot;   &quot;95&quot;    
 ## 
-## $`Nucleotide salvage`
-##  [1] &quot;100&quot;    &quot;132&quot;    &quot;151531&quot; &quot;161823&quot; &quot;1633&quot;   &quot;1716&quot;   &quot;1890&quot;   &quot;270&quot;   
-##  [9] &quot;271&quot;    &quot;272&quot;    &quot;2766&quot;   &quot;3251&quot;   &quot;353&quot;    &quot;4860&quot;   &quot;51292&quot;  &quot;54963&quot; 
-## [17] &quot;7083&quot;   &quot;7084&quot;   &quot;7371&quot;   &quot;7378&quot;   &quot;8226&quot;   &quot;83549&quot;  &quot;978&quot;</code></pre>
+## $`Purine salvage`
+##  [1] &quot;100&quot;    &quot;132&quot;    &quot;161823&quot; &quot;1633&quot;   &quot;1716&quot;   &quot;270&quot;    &quot;271&quot;    &quot;272&quot;   
+##  [9] &quot;2766&quot;   &quot;3251&quot;   &quot;353&quot;    &quot;4860&quot;   &quot;51292&quot;</code></pre>
 <p>The list names correspond to the Reactome pathway name. Each pathway provides the entrezgene IDs of all genes in that pathway. For example, from the output above, we see that the first pathway in the list is the “purine salvage” pathway, and it contains the genes: 100, 132, 161823, etc.</p>
 <p>In practice, all of these pathways can be used in the <code>dnapath()</code> analysis. However, in some studies we may only be interested in a subset of this list. For example, if we are studying a cancer-related gene expression dataset, we may have a specific interest in cancer-related pathways. There are two ways to obtain a subset from the pathway list: (1) using the pathway names or (2) using the pathway genes. These two approaches are demonstrated in turn.</p>
 <div id="subsetting-pathways-using-pathway-names" class="section level2" number="1.1">
@@ -444,7 +452,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 ## [17] &quot;5295&quot;   &quot;5296&quot;   &quot;55615&quot;  &quot;57761&quot;  &quot;5879&quot;   &quot;64223&quot;  &quot;6714&quot;   &quot;7409&quot;  
 ## [25] &quot;7525&quot;   &quot;79109&quot;  &quot;8503&quot;   &quot;9020&quot;   &quot;940&quot;    &quot;9402&quot;   &quot;941&quot;    &quot;942&quot;   
 ## [33] &quot;998&quot;</code></pre>
-<p>Subsetting results in 80 pathways that contain at least one of the five cancer-related genes of interest. In general, any set of entrezgene IDs can be used to subset the pathways obtained from the <code>dnapath::get_reactome_pathways()</code> function, as illustrated in this example.</p>
+<p>Subsetting results in 84 pathways that contain at least one of the five cancer-related genes of interest. In general, any set of entrezgene IDs can be used to subset the pathways obtained from the <code>dnapath::get_reactome_pathways()</code> function, as illustrated in this example.</p>
 </div>
 <div id="p53_pathways-data" class="section level2" number="1.3">
 <h2><span class="header-section-number">1.3</span> <code>p53_pathways</code> data</h2>
@@ -599,7 +607,7 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>gene_symbols <span class="ot">&lt;-</span> <span class="fu">colnames</span>(rnaseq) <span class="co"># Extract the gene symbols to relabel.</span></span>
 <span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>gene_mat <span class="ot">&lt;-</span> <span class="fu">symbol_to_entrez</span>(gene_symbols, <span class="st">&quot;human&quot;</span>,</span>
 <span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>                             <span class="at">dir_save =</span> <span class="fu">tempdir</span>()) <span class="co"># Obtain mapping.</span></span></code></pre></div>
-<pre><code>##  - loading gene info from /var/folders/vb/115zgf4x28vf40dccy9mj5hw0000gn/T//RtmpGAJBIA/entrez_to_hsapiens.rds</code></pre>
+<pre><code>##  - loading gene info from /var/folders/vb/115zgf4x28vf40dccy9mj5hw0000gn/T//RtmpL6rbxJ/entrez_to_hsapiens.rds</code></pre>
 <div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>gene_mat[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, ]</span></code></pre></div>
 <pre><code>##   hgnc_symbol entrezgene_id
 ## 1        A1BG             1
@@ -628,13 +636,13 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>index_genes <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="fu">colnames</span>(rnaseq) <span class="sc">%in%</span> <span class="fu">get_genes</span>(p53_pathways))</span>
 <span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>rnaseq <span class="ot">&lt;-</span> rnaseq[, index_genes]</span>
 <span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(rnaseq) <span class="co"># 32 samples with 150 genes.</span></span></code></pre></div>
-<pre><code>## [1]  32 143</code></pre>
+<pre><code>## [1]  32 149</code></pre>
 <p>For completeness, we will show how to convert the entrezgene IDs in the pathway list into gene symbols.</p>
 <div class="sourceCode" id="cb42"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Convert entrezgene IDs -&gt; gene symbols</span></span>
 <span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a>gene_entrez <span class="ot">&lt;-</span> <span class="fu">get_genes</span>(p53_pathways) <span class="co"># Extract genes from pathway list.</span></span>
 <span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a>gene_mat <span class="ot">&lt;-</span> <span class="fu">entrez_to_symbol</span>(gene_entrez, <span class="st">&quot;human&quot;</span>, </span>
 <span id="cb42-4"><a href="#cb42-4" aria-hidden="true" tabindex="-1"></a>                             <span class="at">dir_save =</span> <span class="fu">tempdir</span>()) <span class="co"># Obtain mapping.</span></span></code></pre></div>
-<pre><code>##  - loading gene info from /var/folders/vb/115zgf4x28vf40dccy9mj5hw0000gn/T//RtmpGAJBIA/entrez_to_hsapiens.rds</code></pre>
+<pre><code>##  - loading gene info from /var/folders/vb/115zgf4x28vf40dccy9mj5hw0000gn/T//RtmpL6rbxJ/entrez_to_hsapiens.rds</code></pre>
 <div class="sourceCode" id="cb44"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a>gene_mat[<span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>, ]</span></code></pre></div>
 <pre><code>##   entrezgene_id hgnc_symbol
 ## 1         10000        AKT3
@@ -648,8 +656,8 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 <pre><code>## $`Regulation of TP53 Degradation (See also: Regulation of TP53 Expression and Degradation)`
 ##  [1] &quot;AKT3&quot;    &quot;CDK2&quot;    &quot;CDKN2A&quot;  &quot;CHEK2&quot;   &quot;RFFL&quot;    &quot;DAXX&quot;    &quot;AKT1&quot;   
 ##  [8] &quot;AKT2&quot;    &quot;MTOR&quot;    &quot;RICTOR&quot;  &quot;MDM2&quot;    &quot;MDM4&quot;    &quot;ATM&quot;     &quot;PHF20&quot;  
-## [15] &quot;PDPK1&quot;   &quot;PPP2CA&quot;  &quot;5516&quot;    &quot;PPP2R1A&quot; &quot;PPP2R1B&quot; &quot;PPP2R5C&quot; &quot;PRR5&quot;   
-## [22] &quot;RPS27A&quot;  &quot;MLST8&quot;   &quot;SGK1&quot;    &quot;TP53&quot;    &quot;UBA52&quot;   &quot;UBB&quot;     &quot;7316&quot;   
+## [15] &quot;PDPK1&quot;   &quot;PPP2CA&quot;  &quot;PPP2CB&quot;  &quot;PPP2R1A&quot; &quot;PPP2R1B&quot; &quot;PPP2R5C&quot; &quot;PRR5&quot;   
+## [22] &quot;RPS27A&quot;  &quot;MLST8&quot;   &quot;SGK1&quot;    &quot;TP53&quot;    &quot;UBA52&quot;   &quot;UBB&quot;     &quot;UBC&quot;    
 ## [29] &quot;USP7&quot;    &quot;MAPKAP1&quot; &quot;RNF34&quot;   &quot;CCNA2&quot;   &quot;CCNA1&quot;   &quot;CCNG1&quot;   &quot;USP2&quot;   
 ## [36] &quot;CDK1&quot;    &quot;PRDM1&quot;  
 ## 

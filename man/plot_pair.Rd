@@ -12,7 +12,8 @@ plot_pair(
   alpha = 0.5,
   se_alpha = 0.1,
   use_facet = FALSE,
-  scales = "fixed"
+  scales = "fixed",
+  colors = c(rgb(0.31, 0.58, 0.8, 0.9), rgb(1, 0.19, 0.19, 0.9))
 )
 }
 \arguments{
@@ -39,6 +40,9 @@ using the \code{link[ggplot2]{facet_wrap}} method.}
 
 \item{scales}{Only used if do_facet_wrap is TRUE. See
 \code{link[ggplot2]{facet_wrap}} for details.}
+
+\item{colors}{A vector of length two containing the rgb colors used for the
+two groups.}
 }
 \value{
 Plots the differential network and returns the ggplot object.

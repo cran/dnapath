@@ -122,7 +122,7 @@ annotate RNA-seq data using entrezgene IDs when obtaining gene expression counts
 
 There are also several network inference methods provided in this package. Many of these are available in other R packages, but the format of their inputs and outputs can vary. Wrapper functions have been created to standardize these aspects. The method names are all prefixed with `run_` (for easy searching) and can be used as the **network_inference** argument in `dnapath()`. The methods are listed here, and additional information/references can be found in the package documentation.
 
-* `run_aracne`, `run_bc3net`, `run_c3net`, `run_corr`, `run_dwlasso`, `run_genie3`, `run_glasso`, `run_mrnet`, `run_pcor`, and `run_silencer`.
+* `run_aracne`, `run_bc3net`, `run_c3net`, `run_corr`, ``run_genie3`, `run_glasso`, `run_mrnet`, `run_pcor`, and `run_silencer`.
   - All methods take in an $n$ by $p$ matrix of gene expression counts ($n$ samples and $p$ genes) as its first argument. The output of each is a $p$ by $p$ matrix of association scores.
 
 The default method used is `run_pcor`, which infers the gene-gene association network using partial correlations. It is important to note that different measures may be better suited for answering different research questions, however those details are beyond the scope of this vignette.

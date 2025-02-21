@@ -198,6 +198,8 @@ plot.dnapath <- function(x, alpha = NULL, monotonized = FALSE,
 #' using the \code{link[ggplot2]{facet_wrap}} method.
 #' @param scales Only used if do_facet_wrap is TRUE. See 
 #' \code{link[ggplot2]{facet_wrap}} for details.
+#' @param colors A vector of length two containing the rgb colors used for the 
+#' two groups.
 #' @return Plots the differential network and returns the ggplot object. 
 #' Additional modifications can be applied to this object just
 #' like any other ggplot.
@@ -221,14 +223,21 @@ plot.dnapath <- function(x, alpha = NULL, monotonized = FALSE,
 #'   ggplot2::scale_x_log10() +
 #'   ggplot2::scale_y_log10()
 #' g
-plot_pair <- function(x, gene_A, gene_B, method = "loess", 
-                      alpha = 0.5, se_alpha = 0.1, 
-                      use_facet = FALSE, scales = "fixed") {
+plot_pair <- function(x, gene_A, gene_B, method = "loess", alpha = 0.5, 
+                      se_alpha = 0.1, use_facet = FALSE, scales = "fixed",
+                      colors = c(rgb(0.31, 0.58, 0.8, 0.9),
+                                 rgb(1, 0.19, 0.19, 0.9))) {
   if(!is(x, "dnapath") && !is(x, "dnapath_list")) {
     stop('x must be a "dnapath" or "dnapath_list" object.')
   }
   
-  groups <- rep(x$param$groups, x$param$n)
+  # Extract probabilistic group labels from the dnapath results.
+  group_prob = x$param$group_prob
+  # Initialize all subjects as the first group.
+  groups <- rep(colnames(group_prob)[1], nrow(group_prob))
+  # Re-assign subjects that have greater than 50% probability of being in 
+  # the second group as such.
+  groups[group_prob[, 2] > 0.5] <- colnames(group_prob)[2]
   
   index_A <- match(gene_A, colnames(x$param$x))
   index_B <- match(gene_B, colnames(x$param$x))
@@ -250,8 +259,7 @@ plot_pair <- function(x, gene_A, gene_B, method = "loess",
   }
   g <- g + 
     ggplot2::theme_bw() + 
-    ggplot2::scale_color_manual(values = c(rgb(0.31, 0.58, 0.8, 0.9),
-                                           rgb(1, 0.19, 0.19, 0.9))) +
+    ggplot2::scale_color_manual(values = colors) +
     ggplot2::labs(x = paste("Expression of", gene_A), 
                   y = paste("Expression of", gene_B), color = "Group")
   

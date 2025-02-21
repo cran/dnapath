@@ -20,8 +20,7 @@
 #' \insertRef{meyer08}{dnapath}
 #' @seealso 
 #' \code{\link{run_bc3net}}, \code{\link{run_c3net}},
-#' \code{\link{run_clr}}, \code{\link{run_corr}}, 
-#' \code{\link{run_dwlasso}}, \code{\link{run_genie3}}, 
+#' \code{\link{run_clr}}, \code{\link{run_corr}}, \code{\link{run_genie3}}, 
 #' \code{\link{run_glasso}}, \code{\link{run_mrnet}},
 #' \code{\link{run_pcor}}, and \code{\link{run_silencer}}
 #' @export
@@ -129,8 +128,7 @@ run_aracne <- function(x, weights = NULL, estimator = "spearman", disc = "none",
 #' \insertRef{bc3net}{dnapath}
 #' @seealso 
 #' \code{\link{run_aracne}}, \code{\link{run_c3net}},
-#' \code{\link{run_clr}}, \code{\link{run_corr}}, 
-#' \code{\link{run_dwlasso}}, \code{\link{run_genie3}}, 
+#' \code{\link{run_clr}}, \code{\link{run_corr}}, \code{\link{run_genie3}}, 
 #' \code{\link{run_glasso}}, \code{\link{run_mrnet}},
 #' \code{\link{run_pcor}}, and \code{\link{run_silencer}}
 #' @export
@@ -250,8 +248,7 @@ run_bc3net <- function(x, weights = NULL, boot = 100, estimator = "spearman",
 #' @seealso 
 #' \code{\link{run_aracne}}, 
 #' \code{\link{run_bc3net}}, 
-#' \code{\link{run_clr}}, \code{\link{run_corr}}, 
-#' \code{\link{run_dwlasso}}, \code{\link{run_genie3}}, 
+#' \code{\link{run_clr}}, \code{\link{run_corr}}, \code{\link{run_genie3}}, 
 #' \code{\link{run_glasso}}, \code{\link{run_mrnet}},
 #' \code{\link{run_pcor}}, and \code{\link{run_silencer}}
 #' @export
@@ -360,8 +357,7 @@ run_c3net <- function(x, weights = NULL, estimator = "spearman",
 #' @seealso 
 #' \code{\link{run_aracne}}, 
 #' \code{\link{run_bc3net}}, \code{\link{run_c3net}}, \code{\link{run_corr}}, 
-#' \code{\link{run_dwlasso}}, \code{\link{run_genie3}}, 
-#' \code{\link{run_glasso}}, \code{\link{run_mrnet}},
+#' \code{\link{run_genie3}}, \code{\link{run_glasso}}, \code{\link{run_mrnet}},
 #' \code{\link{run_pcor}}, and \code{\link{run_silencer}}
 #' @export
 #' @examples 
@@ -460,8 +456,7 @@ run_clr <- function(x, weights = NULL, estimator = "spearman", ...) {
 #' @seealso 
 #' \code{\link{run_aracne}}, 
 #' \code{\link{run_bc3net}}, \code{\link{run_c3net}},
-#' \code{\link{run_clr}},
-#' \code{\link{run_dwlasso}}, \code{\link{run_genie3}}, 
+#' \code{\link{run_clr}}, \code{\link{run_genie3}}, 
 #' \code{\link{run_glasso}}, \code{\link{run_mrnet}},
 #' \code{\link{run_pcor}}, and \code{\link{run_silencer}}
 #' @export
@@ -521,27 +516,26 @@ run_corr <- function(x, weights = NULL, threshold = NULL,
   # If only 1 or fewer genes have variability, no network can be estimated.
   if(length(index) <= 1) 
     return(scores)
-
-  index_rows <- 1:nrow(x)
-  if(is.null(weights)) {
-    # Don't make any changes to x.
-  } else if(all(weights == 1 | weights == 0)) {
-    # Subset rows onto those with weight of 1.
-    index_rows <- (weights == 1)
-  } else {
-    # Keep weights unchanged and all rows of x.
-  }
-  x <- x[index_rows, ]
-  weights <- weights[index_rows]
   
   if(is.integer(x[1, 1])) {
     x <- x + 0.0
   }
   
-  k <- length(index)
-  index_set <- combn(k, 2)
-  scores[upper.tri(scores)] <- sapply(1:ncol(index_set), function(i) {
-    wCorr::weightedCorr(x[, index_set[1, i]], x[, index_set[2, i]], method = method, weights = weights)
+  if(is.null(weights)) {
+    weights <- rep(1, nrow(x))
+  }
+  
+  index_rows <- 1:nrow(x)
+  if(all(weights == 1 | weights == 0))
+    index_rows <- (weights == 1) # Subset rows onto those with weight of 1.
+  x <- x[index_rows, ]
+  weights <- weights[index_rows]
+  
+  index_set <- combn(length(index), 2)
+  scores[upper.tri(scores)] <- sapply(1:ncol(index_set), function(k) {
+    i = index[index_set[1, k]]
+    j = index[index_set[2, k]]
+    wCorr::weightedCorr(x[, i], x[, j], method = method, weights = weights)
   })
   scores <- scores + t(scores)
   diag(scores) <- 0
@@ -559,111 +553,6 @@ run_corr <- function(x, weights = NULL, threshold = NULL,
   return(scores)
 }
 
-
-#' Wrapper for degree-weighted lasso method
-#' 
-#' Conducts co-expression analysis using DWLasso \insertCite{sulaimanov18}{dnapath}. 
-#' Uses the implementation from the `DWLasso` package \insertCite{dwlasso}{dnapath}.
-#' Can be used for the `network_inference` argument in \code{\link{dnapath}}.
-#' 
-#' @param x A n by p matrix of gene expression data (n samples and p genes).
-#' @param weights An optional vector of weights. This is used by `dnapath()` to
-#' apply the probabilistic group labels to each observation when estimating the
-#' group-specific network.
-#' @param lambda1 A penalty parameter that controls degree sparsity of the 
-#' inferred network. See \code{\link[DWLasso]{DWLasso}} for details.
-#' @param lambda2 A penalty parameter that controls overall sparsity of the 
-#' inferred network. See \code{\link[DWLasso]{DWLasso}} for details.
-#' @param ... Additional arguments are ignored.
-#' @return A p by p matrix of association scores.
-#' @references 
-#' \insertRef{sulaimanov18}{dnapath}
-#' 
-#' \insertRef{dwlasso}{dnapath}
-#' @seealso 
-#' \code{\link{run_aracne}}, 
-#' \code{\link{run_bc3net}}, \code{\link{run_c3net}},
-#' \code{\link{run_clr}}, \code{\link{run_corr}}, \code{\link{run_genie3}}, 
-#' \code{\link{run_glasso}}, \code{\link{run_mrnet}},
-#' \code{\link{run_pcor}}, and \code{\link{run_silencer}}
-#' @export
-#' @examples 
-#' data(meso)
-#' data(p53_pathways)
-#' 
-#' # To create a short example, we subset on two pathways from the p53 pathway list,
-#' # and will only run 1 permutation for significance testing.
-#' pathway_list <- p53_pathways[c(8, 13)]
-#' n_perm <- 1
-#' 
-#' # Use this method to perform differential network analysis.
-#' # The parameters in run_dwlasso() can be adjusted using the ... argument.
-#' # For example, the 'lambda1' parameter can be specified as shown here.
-#' results <- dnapath(x = meso$gene_expression,
-#'                    pathway_list = pathway_list,
-#'                    group_labels = meso$groups,
-#'                    n_perm = n_perm,
-#'                    network_inference = run_dwlasso,
-#'                    lambda1 = 0.5)
-#' summary(results)
-#' 
-#' # The group-specific association matrices can be extracted using get_networks().
-#' nw_list <- get_networks(results[[1]]) # Get networks for pathway 1.
-#' 
-#' \donttest{
-#' # nw_list has length 2 and contains the inferred networks for the two groups.
-#' # The gene names are the Entrezgene IDs from the original expression dataset.
-#' # Renaming the genes in the dnapath results to rename those in the networks.
-#' # NOTE: The temporary directory, tempdir(), is used in this example. In practice,
-#' #       this argument can be removed or changed to an existing directory
-#' results <- rename_genes(results, to = "symbol", species = "human",
-#'                         dir_save = tempdir())
-#' nw_list <- get_networks(results[[1]]) # The genes (columns) will have new names.
-#' 
-#' # (Optional) Plot the network using SeqNet package (based on igraph plotting).
-#' # First rename entrezgene IDs into gene symbols.
-#' SeqNet::plot_network(nw_list[[1]])
-#' }
-run_dwlasso <- function(x, weights = NULL, lambda1 = 0.4, lambda2 = 2, ...) {
-  if(!requireNamespace("DWLasso", quietly = TRUE)) {
-    message("Warning: The `DWLasso` package must be installed to use run_dwlasso(). Using ",
-            "run_corr() instead.")
-    return(run_corr(x, ...))
-  } else {
-    p <- ncol(x)
-    scores <- matrix(0, nrow = p, ncol = p)
-    # Index the genes that have variability in their expression. (Using the max
-    # and min as done here is faster than computing var().)
-    index <- which(apply(x, 2, function(val) abs(max(val) - min(val)) > 1e-8))
-    # If only 1 or fewer genes have variability, no network can be estimated.
-    if(length(index) <= 1) 
-      return(scores)
-    
-    index_rows <- 1:nrow(x)
-    if(is.null(weights)) {
-      # Don't make any changes to x.
-    } else if(all(weights == 1 | weights == 0)) {
-      # Subset rows onto those with weight of 1.
-      index_rows <- (weights == 1)
-    } else {
-      # Subset rows onto those with weight above 0.5.
-      # TODO: this scenario will be updated if DWLasso allows for weights.
-      index_rows <- (weights >= 0.5)
-    }
-    x <- x[index_rows, ]
-    weights <- weights[index_rows]
-    
-    result <- DWLasso::DWLasso(x[, index], lambda1 = lambda1, lambda2 = lambda2)
-    scores[index, index] <- result$mat
-    
-    # Symmetrize the association matrix by averaging.
-    scores <- (scores + t(scores)) / 2
-    
-    colnames(scores) <- colnames(x)
-    
-    return(scores)
-  }
-}
 
 
 #' Wrapper for GENIE3 method
@@ -684,8 +573,7 @@ run_dwlasso <- function(x, weights = NULL, lambda1 = 0.4, lambda2 = 2, ...) {
 #' @seealso 
 #' \code{\link{run_aracne}}, 
 #' \code{\link{run_bc3net}}, \code{\link{run_c3net}},
-#' \code{\link{run_clr}}, \code{\link{run_corr}}, 
-#' \code{\link{run_dwlasso}},
+#' \code{\link{run_clr}}, \code{\link{run_corr}},
 #' \code{\link{run_glasso}}, \code{\link{run_mrnet}},
 #' \code{\link{run_pcor}}, and \code{\link{run_silencer}}
 #' @export
@@ -726,11 +614,11 @@ run_dwlasso <- function(x, weights = NULL, lambda1 = 0.4, lambda2 = 2, ...) {
 #' # First rename entrezgene IDs into gene symbols.
 #' SeqNet::plot_network(nw_list[[1]])
 #' }
-run_genie3 <- function(x, nTrees = 200, weights = NULL, ...) {
+run_genie3 <- function(x, weights = NULL, nTrees = 200, ...) {
   if(!requireNamespace("GENIE3", quietly = TRUE)) {
     message("Warning: The `GENIE3` package must be installed to use run_genie3(). ", 
             "Using run_corr() instead.")
-    return(run_corr(x, ...))
+    return(run_corr(x, weights = weights, ...))
   } else {
     p <- ncol(x)
     scores <- matrix(0, nrow = p, ncol = p)
@@ -800,7 +688,7 @@ run_genie3 <- function(x, nTrees = 200, weights = NULL, ...) {
 #' \code{\link{run_aracne}}, 
 #' \code{\link{run_bc3net}}, \code{\link{run_c3net}},
 #' \code{\link{run_clr}}, \code{\link{run_corr}}, 
-#' \code{\link{run_dwlasso}}, \code{\link{run_genie3}}, \code{\link{run_mrnet}},
+#' \code{\link{run_genie3}}, \code{\link{run_mrnet}},
 #' \code{\link{run_pcor}}, and \code{\link{run_silencer}}
 #' @export
 #' @examples 
@@ -932,8 +820,7 @@ run_glasso <- function(x,
 #' \code{\link{run_aracne}}, 
 #' \code{\link{run_bc3net}}, \code{\link{run_c3net}},
 #' \code{\link{run_clr}}, \code{\link{run_corr}}, 
-#' \code{\link{run_dwlasso}}, \code{\link{run_genie3}}, 
-#' \code{\link{run_glasso}}, 
+#' \code{\link{run_genie3}}, \code{\link{run_glasso}}, 
 #' \code{\link{run_pcor}}, and \code{\link{run_silencer}}
 #' @export
 #' @examples 
@@ -1036,8 +923,7 @@ run_mrnet <- function(x, estimator = "spearman", weights = NULL, ...) {
 #' @seealso 
 #' \code{\link{run_aracne}}, 
 #' \code{\link{run_bc3net}}, \code{\link{run_c3net}},
-#' \code{\link{run_clr}}, \code{\link{run_corr}}, 
-#' \code{\link{run_dwlasso}}, \code{\link{run_genie3}}, 
+#' \code{\link{run_clr}}, \code{\link{run_corr}}, \code{\link{run_genie3}}, 
 #' \code{\link{run_glasso}}, \code{\link{run_mrnet}}, and \code{\link{run_silencer}}
 #' @export
 #' @examples 
@@ -1136,8 +1022,7 @@ run_pcor <- function(x, weights = NULL, ranks = FALSE, verbose = FALSE, ...) {
 #' @seealso 
 #' \code{\link{run_aracne}}, 
 #' \code{\link{run_bc3net}}, \code{\link{run_c3net}},
-#' \code{\link{run_clr}}, \code{\link{run_corr}}, 
-#' \code{\link{run_dwlasso}}, \code{\link{run_genie3}}, 
+#' \code{\link{run_clr}}, \code{\link{run_corr}}, \code{\link{run_genie3}}, 
 #' \code{\link{run_glasso}}, \code{\link{run_mrnet}}, and
 #' \code{\link{run_pcor}}
 #' @export
@@ -1297,8 +1182,7 @@ run_silencer <- function(x, weights = NULL, method = "spearman",
 #' @seealso 
 #' \code{\link{run_aracne}}, 
 #' \code{\link{run_bc3net}}, \code{\link{run_c3net}},
-#' \code{\link{run_clr}}, \code{\link{run_corr}}, 
-#' \code{\link{run_dwlasso}}, \code{\link{run_genie3}}, 
+#' \code{\link{run_clr}}, \code{\link{run_corr}}, \code{\link{run_genie3}}, 
 #' \code{\link{run_glasso}}, \code{\link{run_mrnet}}, and \code{\link{run_silencer}}
 #' @export
 #' @examples 

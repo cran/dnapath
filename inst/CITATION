@@ -1,13 +1,13 @@
 citHeader("To cite dnapath in publications use:")
 
-citEntry(
-entry = "Article",
+bibentry(
+bibtype = "Article",
 title = "Integrating Gene Regulatory Pathways into Differential Network Analysis of Gene Expression Data",
-author = personList(as.person("Tyler Grimes"), as.person("Steven Potter"), as.person("Somnath Datta")),
+author = c(person("Tyler", "Grimes"), person("Steven Potter"), person("Somnath", "Datta")),
 journal = "Scientific reports",
 year = "2019",
 volume = "9",
 page = "5479",
 publisher = "Nature Publishing Group",
-textVersion = "Grimes, T., Potter, S.S. & Datta, S. Integrating gene regulatory pathways into differential network analysis of gene expression data. Scientific Reports 9, 5479 (2019). https://doi.org/10.1038/s41598-019-41918-3"
+doi = "10.1038/s41598-019-41918-3"
 )

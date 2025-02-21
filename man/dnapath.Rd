@@ -45,8 +45,7 @@ rows do not sum to 1, then each entry will be divided by its row sum.}
 should take in an n by p matrix and return a p by p matrix of association
 scores. (Built-in options include: \code{\link{run_aracne}},
 \code{\link{run_bc3net}}, \code{\link{run_c3net}},
-\code{\link{run_clr}}, \code{\link{run_corr}},
-\code{\link{run_dwlasso}}, \code{\link{run_genie3}},
+\code{\link{run_clr}}, \code{\link{run_corr}}, \code{\link{run_genie3}},
 \code{\link{run_glasso}}, \code{\link{run_mrnet}},
 \code{\link{run_pcor}}, and \code{\link{run_silencer}}.)
 Defaults to \code{\link{run_pcor}} for partial correlations.}
